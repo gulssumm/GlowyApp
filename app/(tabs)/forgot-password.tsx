@@ -6,10 +6,11 @@ import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } fro
 export default function Login() {
   const router = useRouter();
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [old_password, setold_Password] = useState("");
+  const [new_password, setnew_Password] = useState("");
 
   const handleLogin = () => {
-    if (!username || !password) {
+    if (!username || !old_password || !new_password) {
       alert("Please fill in all fields");
       return;
     }
@@ -25,37 +26,30 @@ export default function Login() {
         </TouchableOpacity>
 
         {/* Title */}
-        <Text style={styles.title}>Login</Text>
+        <Text style={styles.title}>New Password</Text>
 
         {/* Inputs */}
         <TextInput
           style={styles.input}
-          placeholder="Username"
+          placeholder="Old Password"
           placeholderTextColor="#aaa"
-          value={username}
-          onChangeText={setUsername}
+          value={old_password}
+          onChangeText={setold_Password}
         />
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder="New Password"
           placeholderTextColor="#aaa"
           secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          value={new_password}
+          onChangeText={setnew_Password}
         />
 
-        {/* Login Button */}
-        <TouchableOpacity style={styles.logInButton} onPress={handleLogin}>
-          <Text style={styles.loginText}>Login</Text>
+        {/* Reset Password Button */}
+        <TouchableOpacity style={styles.resetPasswordButton} onPress={handleLogin}>
+          <Text style={styles.resetPasswordText}>Reset</Text>
         </TouchableOpacity>
-
-        {/* Forgot Password */}
-        <TouchableOpacity 
-        style={styles.forgotButton} 
-        onPress={() => router.push("/forgot-password")}
-        >
-        <Text style={styles.forgotText}>Forgot Password?</Text>
-        </TouchableOpacity>
+        
       </View>
     </SafeAreaView>
   );
@@ -105,7 +99,7 @@ const styles = StyleSheet.create({
     width: "80%",
     alignSelf: "center",
   },
-  logInButton: {
+  resetPasswordButton: {
     backgroundColor: "#800080",
     alignItems: "center",
     alignSelf: "center",
@@ -116,12 +110,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 40,
   },
-  loginText: {
+  resetPasswordText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
   },
+
   forgotButton: {
     alignSelf: "center",
     marginBottom: 20,
