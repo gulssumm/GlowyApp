@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -7,14 +7,15 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.container}>
+      {/* Logo */}
+      <Image source={require("../../assets/images/4.png")} style={styles.logo} />
       {/* Title */}
       <Text style={styles.title}>Let's Get Started</Text>
-
       {/* Buttons */}
       <TouchableOpacity style={styles.logInButton} onPress={() => router.push("/login")}>
         <Text style={styles.buttonText}>Sign In</Text>
       </TouchableOpacity>
-      
+
     </View>
     </SafeAreaView>
   );
@@ -57,5 +58,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 20,
     fontWeight: "bold",
+  },
+  logo: {
+    width: 180,    
+    height: 180,   
+    resizeMode: "contain",
+    marginBottom: 20,
   },
 });
