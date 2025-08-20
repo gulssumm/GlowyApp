@@ -65,14 +65,15 @@ export default function SignUpScreen() {
             onChangeText={setEmail}
           />
 
-          {/* Spacer */}
+          {/* Spacer 
           <View style={{ flex: 1 }} />
+          */}
 
           {/* Sign Up button */}
           <TouchableOpacity
             style={[
               styles.signUpButton,
-              { backgroundColor: isFormValid ? "#800080" : "#ccc" }, 
+              { backgroundColor: isFormValid ? "#4B0082" : "#ccc" }, 
             ]}
             onPress={handleSignUp}
             disabled={!isFormValid} // disables press if empty
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
   signUpButton: {
     padding: 20,
     alignItems: "center",
-    borderRadius: 0,
+    borderRadius: 10,
     marginBottom: 40, 
   },
   signUpText: {

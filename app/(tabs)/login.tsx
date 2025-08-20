@@ -17,10 +17,13 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
+      {/* Title */}
+      <Text style={styles.title}>Login</Text>
+
       {/* Back Button */}
       <TouchableOpacity 
         style={styles.backButton} 
-        onPress={() => navigation.navigate("Main" as never)} // goes to Main screen
+        onPress={() => navigation.goBack()} // goes to Main screen
       >
         <Text style={styles.backText}>{"<"}</Text>
       </TouchableOpacity>
@@ -43,8 +46,8 @@ export default function Login() {
       />
 
       {/* Login Button */}
-      <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
-        <Text style={styles.loginText}>Sign in</Text>
+      <TouchableOpacity style={styles.logInButton} onPress={handleLogin}>
+        <Text style={styles.loginText}>Login</Text>
       </TouchableOpacity>
     </View>
   );
@@ -52,15 +55,42 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: "#fff",
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: "center",
   },
-  backButton: {
-    position: "absolute",
-    top: 50,
-    left: 20,
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginTop: 40,
+    marginBottom: 30,
+    textAlign: "center",
+    color: "#800080",
   },
+  backButton: {
+  position: "absolute",
+  top: 50,
+  left: 20,
+  width: 40,
+  height: 40,
+  borderRadius: 20, // makes it a circle
+  backgroundColor: "#fff", // white background
+  borderWidth: 2,
+  borderColor: "#6a0dad", // purple border
+  alignItems: "center",
+  justifyContent: "center",
+  shadowColor: "#000",
+  shadowOpacity: 0.2,
+  shadowRadius: 3,
+  elevation: 4, // Android shadow
+},
+backIcon: {
+  fontSize: 20,
+  color: "#6a0dad",
+  fontWeight: "bold",
+},
+
   backText: {
     fontSize: 24,
     color: "#6a0dad",
@@ -74,7 +104,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "white",
   },
-  signInButton: {
+  logInButton: {
     backgroundColor: "#800080",
     padding: 20,
     alignItems: "center",
