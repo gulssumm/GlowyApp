@@ -1,16 +1,25 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function SplashScreen() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace("/welcome"); 
-    }, 3000);
+    const checkLogin = async () => {
+      const userToken = await AsyncStorage.getItem('userToken'); // check if user is logged in
+      setTimeout(() => {
+        if (userToken) {
+          router.replace("/main");
+        } else {
+          router.replace("/welcome");
+        }
+      }, 3000);
+    };
 
-    return () => clearTimeout(timer);
+    checkLogin();
   }, []);
 
   return (
