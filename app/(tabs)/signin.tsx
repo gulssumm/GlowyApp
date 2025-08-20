@@ -43,8 +43,8 @@ export default function Login() {
       />
 
       {/* Login Button */}
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginText}>Login</Text>
+      <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
+        <Text style={styles.loginText}>Sign in</Text>
       </TouchableOpacity>
     </View>
   );
@@ -74,10 +74,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "white",
   },
-  loginButton: {
-    backgroundColor: "#6a0dad",
+  signInButton: {
+    backgroundColor: "#800080",
     padding: 20,
     alignItems: "center",
+    borderRadius: 10,
     marginBottom: 40,
   },
   loginText: {

@@ -1,14 +1,14 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 
 export default function SignUpScreen() {
@@ -49,20 +49,20 @@ export default function SignUpScreen() {
             onChangeText={setUsername}
           />
           <TextInput
-            placeholder="Email Address"
-            style={styles.input}
-            placeholderTextColor="#888"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
             placeholder="Password"
             style={styles.input}
             placeholderTextColor="#888"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+          />
+          <TextInput
+            placeholder="Email Address"
+            style={styles.input}
+            placeholderTextColor="#888"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
 
           {/* Spacer */}
