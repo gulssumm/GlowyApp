@@ -54,8 +54,17 @@ export default function Login() {
         style={styles.forgotButton} 
         onPress={() => router.push("/forgot-password")}
         >
-        <Text style={styles.forgotText}>Forgot Password?</Text>
+        <Text style={styles.Link}>Forgot Password?</Text>
         </TouchableOpacity>
+
+        {/* Sign up link */}
+        <View style={styles.signupContainer}>
+          <Text style={styles.Text}>Don’t you have an account? </Text>
+          <TouchableOpacity onPress={() => router.push("/signup")}>
+            <Text style={styles.Link}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
     </SafeAreaView>
   );
@@ -126,10 +135,18 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 20,
   },
-  forgotText: {
+  Link: {
     color: "#800080",
     fontSize: 14,
     textDecorationLine: "underline",
   },
-
+  Text: {
+    color: "#800080",
+    fontSize: 14,
+  },
+  signupContainer:{
+    flexDirection: "row",
+    marginTop: 20,
+    alignSelf: "center",
+  }
 });
