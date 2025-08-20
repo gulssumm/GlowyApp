@@ -1,8 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -13,18 +12,15 @@ import {
 
 export default function SignUpScreen() {
   const router = useRouter();
-
-  // form state
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // check if all fields are filled
   const isFormValid = username.trim() && email.trim() && password.trim();
 
   const handleSignUp = () => {
     if (isFormValid) {
-      router.push("/main"); // go to main screen
+      router.push("/main"); // expo-router navigation
     } else {
       alert("Please fill in all fields.");
     }
@@ -32,13 +28,14 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
         <View style={styles.container}>
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={() => router.replace("/welcome")}>
+            <Ionicons name="chevron-back" size={28} color="#800080" />
+          </TouchableOpacity>
+
           {/* Title */}
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>Sign Up</Text>
 
           {/* Inputs */}
           <TextInput
@@ -65,38 +62,35 @@ export default function SignUpScreen() {
             onChangeText={setEmail}
           />
 
-          {/* Spacer 
-          <View style={{ flex: 1 }} />
-          */}
-
-          {/* Sign Up button */}
+          {/* Sign Up Button */}
           <TouchableOpacity
             style={[
               styles.signUpButton,
-              { backgroundColor: isFormValid ? "#4B0082" : "#ccc" }, 
+              { backgroundColor: isFormValid ? "#4B0082" : "#ccc" },
             ]}
             onPress={handleSignUp}
-            disabled={!isFormValid} // disables press if empty
+            disabled={!isFormValid}
           >
             <Text style={styles.signUpText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
     backgroundColor: "#fff",
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "stretch", // ensures vertical stacking
   },
   title: {
-    fontSize: 28,
+    fontSize: 35,
     fontWeight: "bold",
     marginTop: 40,
-    marginBottom: 30,
+    marginBottom: 20,
     textAlign: "center",
     color: "#800080",
   },
@@ -104,19 +98,40 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 15,
     fontSize: 16,
+    color: "black",
+    width: "80%",
+    alignSelf: "center",
   },
   signUpButton: {
-    padding: 20,
+    backgroundColor: "#800080",
     alignItems: "center",
+    alignSelf: "center",
+    paddingVertical: 10,
+    width: "80%",
     borderRadius: 10,
-    marginBottom: 40, 
+    marginTop: 10,
+    marginBottom: 40,
   },
   signUpText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  backButton: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
   },
 });

@@ -1,11 +1,12 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <View style={styles.container}>
       {/* Title */}
       <Text style={styles.title}>Let's Get Started</Text>
 
@@ -18,6 +19,7 @@ export default function WelcomeScreen() {
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
     </View>
+    </SafeAreaView>
   );
 }
 
@@ -25,17 +27,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 120,
     alignItems: "center",
+    paddingHorizontal: 20,
+    justifyContent: "center",
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 50,
+    marginTop: 20,
+    marginBottom: 20,
+    textAlign: "center",
     color: "#800080",
   },
   logInButton: {
-    width: "70%",
+    width: "50%",
+    height: "8%",
     backgroundColor: "#800080",
     padding: 15,
     borderRadius: 10,
@@ -43,7 +49,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   signUpButton: {
-    width: "70%",
+    width: "50%",
+    height: "8%",
     backgroundColor: "#4B0082",
     padding: 15,
     borderRadius: 10,
@@ -51,6 +58,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: "bold",
   },
 });
