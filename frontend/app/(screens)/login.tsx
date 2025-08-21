@@ -1,19 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { loginUser } from "../../api";
 
 export default function Login() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
 
-  const handleLogin = () => {
-    if (!username || !password) {
+  const handleLogin = async () => {
+    if (!name || !password) {
       alert("Please fill in all fields");
       return;
     }
-    router.push("/main");
+
+    try {
+      const user = await loginUser(name, email, password);
+      Alert.alert("Login Success", JSON.stringify(name));
+      router.push("/main");
+    } catch (err) {
+      alert(err);
+    }
   };
 
   return (
@@ -30,10 +39,10 @@ export default function Login() {
         {/* Inputs */}
         <TextInput
           style={styles.input}
-          placeholder="Username"
+          placeholder="Name"
           placeholderTextColor="#aaa"
-          value={username}
-          onChangeText={setUsername}
+          value={name}
+          onChangeText={setName}
         />
         <TextInput
           style={styles.input}
@@ -42,6 +51,13 @@ export default function Login() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email Address"
+          placeholderTextColor="#aaa"
+          value={email}
+          onChangeText={setEmail}
         />
 
         {/* Login Button */}

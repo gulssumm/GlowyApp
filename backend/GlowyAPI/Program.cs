@@ -1,4 +1,5 @@
 using GlowyAPI.Data;
+using GlowyAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,10 +20,44 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Seed database
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-app.UseAuthorization();
+    // Create database if it does not exist
+    db.Database.EnsureCreated();
 
-app.MapControllers();
+    if (!db.Jewelleries.Any())
+    {
+        db.Jewelleries.AddRange(
+            new Jewellery { Name = "Gold Ring", Description = "18K Gold Ring", Price = 1200, ImageUrl = "https://..." },
+            new Jewellery { Name = "Silver Necklace", Description = "Silver Pendant", Price = 450, ImageUrl = "https://..." }
+        );
+        db.SaveChanges();
+    }
+    if (!db.Users.Any())
+    {
+        db.Users.Add(new User
+        {
+            Username = "testuser",
+            Email = "test@example.com",
+            Password = "123456" //TODO: hash passwords
+        });
+        db.SaveChanges();
+    }
 
-app.Run();
+
+
+    // app.UseHttpsRedirection();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    // Bind to LAN IP  and port 5000
+    app.Urls.Clear(); // Clear default URLs
+    app.Urls.Add("http://192.168.1.130:5000");
+
+    app.Run();
+}
