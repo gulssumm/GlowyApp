@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { registerUser } from "../../api";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -18,11 +20,19 @@ export default function SignUpScreen() {
 
   const isFormValid = username.trim() && email.trim() && password.trim();
 
-  const handleSignUp = () => {
-    if (isFormValid) {
-      router.push("/main"); // expo-router navigation
-    } else {
-      alert("Please fill in all fields.");
+  const handleSignUp = async () => {
+    if (!isFormValid) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+
+    try {
+      const newUser = await registerUser(username, email, password);
+      Alert.alert("Success", "User registered successfully!");
+      router.push("/login"); // navigate to login after signup
+    } catch (err: any) {
+      // show backend error
+      Alert.alert("Registration Failed", JSON.stringify(err));
     }
   };
 

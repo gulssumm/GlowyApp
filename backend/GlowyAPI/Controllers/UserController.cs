@@ -20,7 +20,19 @@ namespace GlowyAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] User user)
         {
-            // In production: hash passwords
+            // Check if username exists
+            if (await _context.Users.AnyAsync(u => u.Username == user.Username))
+            {
+                return Conflict("Username already taken.");
+            }
+
+            // Check if email exists 
+            if (await _context.Users.AnyAsync(u => u.Email == user.Email))
+            {
+                return Conflict("Email already registered.");
+            }
+
+            // TODO: hash passwords
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return Ok(user);
