@@ -28,11 +28,12 @@ export default function SignUpScreen() {
 
     try {
       const newUser = await registerUser(username, email, password);
+      console.log("Registration successful:", newUser); // Add this
       Alert.alert("Success", "User registered successfully!");
-      router.push("/login"); // navigate to login after signup
+      router.push("/login");
     } catch (err: any) {
-      // show backend error
-      Alert.alert("Registration Failed", JSON.stringify(err));
+      console.log("Registration failed:", err); // Add this
+      Alert.alert("Registration Failed", err.toString());
     }
   };
 
