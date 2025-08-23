@@ -1,65 +1,150 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { changePassword } from "../../api";
 
-export default function Login() {
+export default function ForgotPassword() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [old_password, setold_Password] = useState("");
-  const [new_password, setnew_Password] = useState("");
+  const [email, setEmail] = useState("");
+  const [old_password, setOldPassword] = useState("");
+  const [new_password, setNewPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (!username || !old_password || !new_password) {
-      alert("Please fill in all fields");
+  const isFormValid = email.trim() && old_password.trim() && new_password.trim();
+
+  const handleReset = async () => {
+    if (!isFormValid) {
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
-    router.push("/main");
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Error", "Please enter a valid email address.");
+      return;
+    }
+
+    // Password length validation
+    if (new_password.length < 6) {
+      Alert.alert("Error", "New password must be at least 6 characters long.");
+      return;
+    }
+
+    // Check if new password is different from old password
+    if (old_password === new_password) {
+      Alert.alert("Error", "New password must be different from current password.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await changePassword(email, old_password, new_password);
+      
+      Alert.alert(
+        "Success", 
+        "Password changed successfully!", 
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Clear form
+              setEmail("");
+              setOldPassword("");
+              setNewPassword("");
+              // Go to login screen
+              router.push("/login");
+            }
+          }
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert("Password Change Failed", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.container}>
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.replace("/welcome")}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => router.replace("/welcome")}
+          disabled={loading}
+        >
           <Ionicons name="chevron-back" size={28} color="#800080" />
         </TouchableOpacity>
 
         {/* Title */}
-        <Text style={styles.title}>New Password</Text>
+        <Text style={styles.title}>Change Password</Text>
+
+        {/* Instructions */}
+        <Text style={styles.instructions}>
+          Enter your email and current password to set a new password.
+        </Text>
 
         {/* Inputs */}
         <TextInput
           style={styles.input}
-          placeholder="Old Password"
+          placeholder="Email Address"
           placeholderTextColor="#aaa"
-          value={old_password}
-          onChangeText={setold_Password}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+          editable={!loading}
         />
         <TextInput
           style={styles.input}
-          placeholder="New Password"
+          placeholder="Current Password"
+          placeholderTextColor="#aaa"
+          secureTextEntry
+          value={old_password}
+          onChangeText={setOldPassword}
+          editable={!loading}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="New Password (min 6 characters)"
           placeholderTextColor="#aaa"
           secureTextEntry
           value={new_password}
-          onChangeText={setnew_Password}
+          onChangeText={setNewPassword}
+          editable={!loading}
         />
 
         {/* Reset Password Button */}
-        <TouchableOpacity style={styles.resetPasswordButton} onPress={handleLogin}>
-          <Text style={styles.resetPasswordText}>Reset</Text>
+        <TouchableOpacity 
+          style={[
+            styles.resetPasswordButton, 
+            { backgroundColor: (isFormValid && !loading) ? "#800080" : "#ccc" }
+          ]} 
+          onPress={handleReset} 
+          disabled={!isFormValid || loading}
+        >
+          <Text style={styles.resetPasswordText}>
+            {loading ? "Changing..." : "Change Password"}
+          </Text>
         </TouchableOpacity>
-        
+
+        {/* Back to Login Link */}
+        <TouchableOpacity 
+          style={styles.loginLink} 
+          onPress={() => router.push("/login")}
+          disabled={loading}
+        >
+          <Text style={styles.loginLinkText}>Back to Login</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
   container: {
     flex: 1,
     paddingHorizontal: 20,
@@ -67,12 +152,18 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
   },
   title: {
-    fontSize: 35,
+    fontSize: 32,
     fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: "center",
     color: "#800080",
+  },
+  instructions: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 30,
+    paddingHorizontal: 20,
   },
   backButton: {
     position: "absolute",
@@ -91,24 +182,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
     marginBottom: 15,
     fontSize: 16,
     color: "black",
-    width: "80%",
+    width: "90%",
     alignSelf: "center",
   },
   resetPasswordButton: {
     backgroundColor: "#800080",
     alignItems: "center",
     alignSelf: "center",
-    padding: 15,
-    width: "25%",
-    height: "6%",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
     borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 40,
+    marginTop: 20,
+    marginBottom: 20,
+    width: "60%",
   },
   resetPasswordText: {
     color: "#fff",
@@ -116,15 +207,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-
-  forgotButton: {
+  loginLink: {
     alignSelf: "center",
-    marginBottom: 20,
+    marginTop: 10,
   },
-  forgotText: {
+  loginLinkText: {
     color: "#800080",
     fontSize: 14,
     textDecorationLine: "underline",
   },
-
 });

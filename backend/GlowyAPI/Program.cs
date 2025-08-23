@@ -24,7 +24,6 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
     // Create database if it does not exist
     db.Database.EnsureCreated();
 
@@ -36,6 +35,7 @@ using (var scope = app.Services.CreateScope())
         );
         db.SaveChanges();
     }
+
     if (!db.Users.Any())
     {
         db.Users.Add(new User
@@ -46,18 +46,11 @@ using (var scope = app.Services.CreateScope())
         });
         db.SaveChanges();
     }
-
-
-
-    // app.UseHttpsRedirection();
-
-    app.UseAuthorization();
-
-    app.MapControllers();
-
-    // Bind to LAN IP  and port 5000
-    app.Urls.Clear(); // Clear default URLs
-    app.Urls.Add("http://192.168.1.130:5000");
-
-    app.Run();
 }
+
+// App configuration - moved outside the scope
+// app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
