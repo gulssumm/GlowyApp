@@ -137,7 +137,6 @@ export default function ForgotPassword() {
           onPress={() => router.push("/login")}
           disabled={loading}
         >
-          <Text style={styles.loginLinkText}>Back to Login</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

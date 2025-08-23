@@ -32,7 +32,7 @@
               "RelativeDocumentMoniker": "Controllers\\UserController.cs",
               "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Controllers\\UserController.cs",
               "RelativeToolTip": "Controllers\\UserController.cs",
-              "ViewState": "AgIAAIQAAAAAAAAAAAA7wGwAAAATAAAAAAAAAA==",
+              "ViewState": "AgIAAIUAAAAAAAAAAAAkwJAAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-22T08:24:14.926Z",
               "IsPinned": true,
@@ -48,8 +48,7 @@
               "RelativeToolTip": "Properties\\launchSettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-08-23T18:16:36.458Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-23T18:16:36.458Z"
             },
             {
               "$type": "Document",
@@ -61,8 +60,7 @@
               "RelativeToolTip": "Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAADUAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-23T17:18:59.086Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-23T17:18:59.086Z"
             }
           ]
         }

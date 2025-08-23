@@ -39,7 +39,7 @@ export default function Login() {
         {/* Inputs */}
         <TextInput
           style={styles.input}
-          placeholder="Name"
+          placeholder="Username"
           placeholderTextColor="#aaa"
           value={name}
           onChangeText={setName}
