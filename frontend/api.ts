@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from "axios";
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -17,6 +18,32 @@ const getApiBase = () => {
 
 const API_BASE = getApiBase();
 
+// AXIOS INTERCEPTORS
+// Add token to all requests automatically
+axios.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('userToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle token expiration
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('userData');
+      // TODO: Redirect to login screen 
+      console.log('Token expired, user logged out');
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Login
 export const loginUser = async (username:string, email: string, password: string) => {
   try {
     const res = await axios.post(`${API_BASE}/user/login`, {
@@ -24,6 +51,18 @@ export const loginUser = async (username:string, email: string, password: string
       password,
       email
     });
+
+    // Store JWT token
+    if (res.data.Token) {
+      await AsyncStorage.setItem('userToken', res.data.Token);
+    }
+    if (res.data.User) {
+      await AsyncStorage.setItem('userData', JSON.stringify(res.data.User));
+    } else {
+      // For current backend that returns user directly
+      await AsyncStorage.setItem('userData', JSON.stringify(res.data));
+    }
+    
     return res.data; // Returns user object or later JWT
   } catch (err: any) {
     console.error("Login error:", err.response?.data || err.message);
@@ -50,6 +89,7 @@ export const loginUser = async (username:string, email: string, password: string
   }
 };
 
+// Register
 export const registerUser = async (username: string, email: string, password: string) => {
   try {
     const res = await axios.post(`${API_BASE}/user/register`, {
@@ -85,6 +125,7 @@ export const registerUser = async (username: string, email: string, password: st
   }
 };
 
+// Change Password
 export const changePassword = async (email: string, oldPassword: string, newPassword: string) => {
   try {
     const res = await axios.post(`${API_BASE}/user/change-password`, {
@@ -118,5 +159,16 @@ export const changePassword = async (email: string, oldPassword: string, newPass
     }
     
     throw message;
+  }
+};
+
+// Logout
+export const logoutUser = async () => {
+  try {
+    await AsyncStorage.removeItem('userToken');
+    await AsyncStorage.removeItem('userData');
+    console.log('User logged out successfully');
+  } catch (error) {
+    console.error('Error during logout:', error);
   }
 };

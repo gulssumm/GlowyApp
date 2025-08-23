@@ -1,6 +1,9 @@
 using GlowyAPI.Data;
 using GlowyAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +13,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=glowyapp.db")); // SQLite database file
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "GlowyAPI",
+            ValidAudience = "GlowyApp",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your-secret-key-here-make-it-long-and-complex"))
+        };
+    });
 
 var app = builder.Build();
 
@@ -38,18 +55,21 @@ using (var scope = app.Services.CreateScope())
 
     if (!db.Users.Any())
     {
-        db.Users.Add(new User
+        var testUser = new User
         {
             Username = "testuser",
             Email = "test@example.com",
-            Password = "123456" //TODO: hash passwords
-        });
+            Password = BCrypt.Net.BCrypt.HashPassword("123456") // Hash the password!
+        };
+
+        db.Users.Add(testUser);
         db.SaveChanges();
     }
 }
 
 // App configuration - moved outside the scope
 // app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

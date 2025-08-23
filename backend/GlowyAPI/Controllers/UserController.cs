@@ -2,11 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using GlowyAPI.Data;
 using GlowyAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GlowyAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -47,12 +49,14 @@ namespace GlowyAPI.Controllers
             else if (emailTaken)
                 return Conflict("Email already registered.");
 
-            // TODO: hash passwords
+            // Hash passwords
             try
             {
+                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
-                return Ok(user);
+                return Ok(new { user.Id, user.Username, user.Email });
             }
             catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE") == true)
             {
@@ -78,10 +82,22 @@ namespace GlowyAPI.Controllers
             }
 
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == login.Email && u.Password == login.Password);
+                .FirstOrDefaultAsync(u => u.Email == login.Email);
 
-            if (user == null) return Unauthorized("Invalid email or password");
-            return Ok(user);
+            // Verify user exists and password matches
+            if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.Password))
+                return Unauthorized("Invalid email or password");
+
+            // Generate JWT token
+            var jwtService = new JwtService();
+            var token = jwtService.GenerateToken(user);
+
+            // Return token and user info
+            return Ok(new
+            {
+                Token = token,
+                User = new { user.Id, user.Username, user.Email }
+            });
         }
 
         // POST: api/user/change-password
@@ -104,15 +120,13 @@ namespace GlowyAPI.Controllers
 
             // Find user by email and old password
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == request.Email && u.Password == request.OldPassword);
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            if (user == null)
-            {
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.OldPassword, user.Password))
                 return Unauthorized("Invalid email or current password.");
-            }
 
             // Update password
-            user.Password = request.NewPassword; // TODO: hash passwords in production
+            user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
             try
             {
