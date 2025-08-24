@@ -6,21 +6,17 @@ using System.Text;
 
 public class JwtService
 {
-    private readonly string _secretKey;
-    private readonly string _issuer;
-    private readonly string _audience;
+    private readonly IConfiguration _configuration;
 
-    public JwtService()
+    public JwtService(IConfiguration configuration)
     {
-        _secretKey = "I1mY1Go0dUPq7RV6uBqQ+ZYD9VOiNqfAHS/MR0LTRcRUmuxF0eyI4yqQxmh0M9aV";
-        _issuer = "GlowyAPI";
-        _audience = "GlowyApp";
+        _configuration = configuration;
     }
 
     public string GenerateToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_secretKey);
+        var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -30,9 +26,9 @@ public class JwtService
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Email, user.Email)
             }),
-            Expires = DateTime.UtcNow.AddDays(7), // Token expires in 7 days
-            Issuer = _issuer,
-            Audience = _audience,
+            Expires = DateTime.UtcNow.AddDays(int.Parse(_configuration["JwtSettings:ExpirationDays"])),
+            Issuer = _configuration["JwtSettings:Issuer"],
+            Audience = _configuration["JwtSettings:Audience"],
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature)
         };

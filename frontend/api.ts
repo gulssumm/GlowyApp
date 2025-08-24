@@ -47,9 +47,8 @@ axios.interceptors.response.use(
 export const loginUser = async (username:string, email: string, password: string) => {
   try {
     const res = await axios.post(`${API_BASE}/user/login`, {
-      username,
+      email,
       password,
-      email
     });
 
     // Store JWT token
@@ -58,9 +57,6 @@ export const loginUser = async (username:string, email: string, password: string
     }
     if (res.data.User) {
       await AsyncStorage.setItem('userData', JSON.stringify(res.data.User));
-    } else {
-      // For current backend that returns user directly
-      await AsyncStorage.setItem('userData', JSON.stringify(res.data));
     }
     
     return res.data; // Returns user object or later JWT

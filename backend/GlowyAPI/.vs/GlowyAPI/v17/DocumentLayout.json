@@ -3,10 +3,6 @@
   "WorkspaceRootPath": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|c:\\users\\21180\\glowyapp\\backend\\glowyapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|c:\\users\\21180\\glowyapp\\backend\\glowyapi\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|solutionrelative:controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -15,8 +11,12 @@
       "RelativeMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|solutionrelative:jwtservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|c:\\users\\21180\\glowyapp\\backend\\glowyapi\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|solutionrelative:properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|c:\\users\\21180\\glowyapp\\backend\\glowyapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|c:\\users\\21180\\glowyapp\\backend\\glowyapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{945E666B-0411-4844-AF3A-F96D88262EDC}|GlowyAPI.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,59 +26,59 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "UserController.cs",
               "DocumentMoniker": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Controllers\\UserController.cs",
               "RelativeDocumentMoniker": "Controllers\\UserController.cs",
               "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Controllers\\UserController.cs",
               "RelativeToolTip": "Controllers\\UserController.cs",
-              "ViewState": "AgIAAD8AAAAAAAAAAAAYwGIAAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAAFMAAAAAAAAAAAAgwEkAAABGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-22T08:24:14.926Z",
-              "IsPinned": true,
+              "WhenOpened": "2025-08-24T15:29:23.6Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "JwtService.cs",
-              "DocumentMoniker": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\JwtService.cs",
-              "RelativeDocumentMoniker": "JwtService.cs",
-              "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\JwtService.cs",
-              "RelativeToolTip": "JwtService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAPAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-23T20:16:28.536Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
               "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAADsAAAAAAAAAAAAawEsAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-23T17:18:59.086Z",
+              "WhenOpened": "2025-08-24T15:27:28.94Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "JwtService.cs",
+              "DocumentMoniker": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\JwtService.cs",
+              "RelativeDocumentMoniker": "JwtService.cs",
+              "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\JwtService.cs",
+              "RelativeToolTip": "JwtService.cs",
+              "ViewState": "AgIAAA8AAAAAAAAAAAA1wCIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-24T15:26:08.061Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "launchSettings.json",
-              "DocumentMoniker": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Properties\\launchSettings.json",
-              "RelativeDocumentMoniker": "Properties\\launchSettings.json",
-              "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Properties\\launchSettings.json",
-              "RelativeToolTip": "Properties\\launchSettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAfAAAAAAAAAA==",
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-08-23T18:16:36.458Z"
+              "WhenOpened": "2025-08-24T15:25:36.361Z",
+              "EditorCaption": ""
             }
           ]
         }

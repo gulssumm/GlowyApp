@@ -1,27 +1,30 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using GlowyAPI.Data;
+﻿using GlowyAPI.Data;
 using GlowyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace GlowyAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly ILogger<UserController> _logger;
+        private readonly JwtService _jwtService;
 
-        public UserController(AppDbContext context, ILogger<UserController> logger)
+        public UserController(AppDbContext context, ILogger<UserController> logger, JwtService jwtService)
         {
             _context = context;
             _logger = logger;
+            _jwtService = jwtService;
         }
 
         // POST: api/users/register
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] User user)
         {
             // Manual validation
@@ -67,7 +70,8 @@ namespace GlowyAPI.Controllers
 
         // POST: api/users/login
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] User login)
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginRequest login)
         {
             // Basic validation to avoid model validation errors
             if (string.IsNullOrWhiteSpace(login.Email) || string.IsNullOrWhiteSpace(login.Password))
@@ -88,9 +92,8 @@ namespace GlowyAPI.Controllers
             if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.Password))
                 return Unauthorized("Invalid email or password");
 
-            // Generate JWT token
-            var jwtService = new JwtService();
-            var token = jwtService.GenerateToken(user);
+            // Injected JwtService to generate token
+            var token = _jwtService.GenerateToken(user);
 
             // Return token and user info
             return Ok(new
@@ -102,6 +105,7 @@ namespace GlowyAPI.Controllers
 
         // POST: api/user/change-password
         [HttpPost("change-password")]
+        [AllowAnonymous]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
             // Validate input
@@ -144,6 +148,7 @@ namespace GlowyAPI.Controllers
 
         // GET: api/users
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var users = await _context.Users.ToListAsync();
@@ -157,4 +162,14 @@ public class ChangePasswordRequest
     public string Email { get; set; }
     public string OldPassword { get; set; }
     public string NewPassword { get; set; }
+}
+
+public class LoginRequest
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; }
+
+    [Required]
+    public string Password { get; set; }
 }
