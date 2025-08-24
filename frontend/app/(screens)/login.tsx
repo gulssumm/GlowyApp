@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { loginUser } from "../../api";
 
 export default function Login() {
@@ -18,7 +18,7 @@ export default function Login() {
 
     try {
       const user = await loginUser(name, email, password);
-      Alert.alert("Login Success", JSON.stringify(name));
+      // Alert.alert("Login Success", JSON.stringify(name));
       router.push("/main");
     } catch (err) {
       alert(err);
@@ -39,10 +39,10 @@ export default function Login() {
         {/* Inputs */}
         <TextInput
           style={styles.input}
-          placeholder="Username"
+          placeholder="Email Address"
           placeholderTextColor="#aaa"
-          value={name}
-          onChangeText={setName}
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           style={styles.input}
@@ -51,13 +51,6 @@ export default function Login() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email Address"
-          placeholderTextColor="#aaa"
-          value={email}
-          onChangeText={setEmail}
         />
 
         {/* Login Button */}

@@ -12,8 +12,8 @@ export default function WelcomeScreen() {
       {/* Title */}
       <Text style={styles.title}>Let's Get Started</Text>
       {/* Buttons */}
-      <TouchableOpacity style={styles.logInButton} onPress={() => router.push("/main")}>
-        <Text style={styles.buttonText}>Sign In</Text>
+      <TouchableOpacity style={styles.exploreButton} onPress={() => router.push("/main")}>
+        <Text style={styles.buttonText}>Explore</Text>
       </TouchableOpacity>
 
     </View>
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#800080",
   },
-  logInButton: {
+  exploreButton: {
     width: "50%",
     height: "8%",
     backgroundColor: "#800080",

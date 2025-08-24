@@ -36,7 +36,7 @@
               "RelativeDocumentMoniker": "Controllers\\UserController.cs",
               "ToolTip": "C:\\Users\\21180\\GlowyApp\\backend\\GlowyAPI\\Controllers\\UserController.cs",
               "RelativeToolTip": "Controllers\\UserController.cs",
-              "ViewState": "AgIAAFMAAAAAAAAAAAAgwEkAAABGAAAAAAAAAA==",
+              "ViewState": "AgIAAFMAAAAAAAAAAAAgwGoAAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-24T15:29:23.6Z",
               "EditorCaption": ""
@@ -51,8 +51,7 @@
               "RelativeToolTip": "Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-24T15:27:28.94Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-24T15:27:28.94Z"
             },
             {
               "$type": "Document",
@@ -64,8 +63,7 @@
               "RelativeToolTip": "JwtService.cs",
               "ViewState": "AgIAAA8AAAAAAAAAAAA1wCIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-24T15:26:08.061Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-24T15:26:08.061Z"
             },
             {
               "$type": "Document",
@@ -77,8 +75,7 @@
               "RelativeToolTip": "appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-08-24T15:25:36.361Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-24T15:25:36.361Z"
             }
           ]
         }
