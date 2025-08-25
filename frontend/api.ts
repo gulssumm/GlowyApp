@@ -1,22 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from "axios";
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 
-const getApiBase = () => {
-  // For iOS Simulator and Android Emulator
-  if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
-    // Check if running on simulator/emulator
-    if (Constants.isDevice === false) {
-      return "http://localhost:5000/api";
-    }
-  }
-  
-  // For physical devices
-  return "http://172.16.1.20:5000/api";
-};
+const API_URL =
+  Constants.expoConfig?.extra?.API_URL ??
+  Constants.manifest2?.extra?.expoClient?.extra?.API_URL ??
+  "http://192.168.1.25:5000/api"; // fallback default
 
-const API_BASE = getApiBase();
 
 // AXIOS INTERCEPTORS
 // Add token to all requests automatically
@@ -44,9 +34,9 @@ axios.interceptors.response.use(
 );
 
 // Login
-export const loginUser = async (username:string, email: string, password: string) => {
+export const loginUser = async (email: string, password: string) => {
   try {
-    const res = await axios.post(`${API_BASE}/user/login`, {
+    const res = await axios.post(`${API_URL}/user/login`, {
       email,
       password,
     });
@@ -88,7 +78,7 @@ export const loginUser = async (username:string, email: string, password: string
 // Register
 export const registerUser = async (username: string, email: string, password: string) => {
   try {
-    const res = await axios.post(`${API_BASE}/user/register`, {
+    const res = await axios.post(`${API_URL}/user/register`, {
       username,
       email,
       password
@@ -124,7 +114,7 @@ export const registerUser = async (username: string, email: string, password: st
 // Change Password
 export const changePassword = async (email: string, oldPassword: string, newPassword: string) => {
   try {
-    const res = await axios.post(`${API_BASE}/user/change-password`, {
+    const res = await axios.post(`${API_URL}/user/change-password`, {
       email,
       oldPassword,
       newPassword
@@ -166,5 +156,159 @@ export const logoutUser = async () => {
     console.log('User logged out successfully');
   } catch (error) {
     console.error('Error during logout:', error);
+  }
+};
+
+// Get current user profile from AsyncStorage
+export const getCurrentUser = async () => {
+  try {
+    const userData = await AsyncStorage.getItem('userData');
+    const userToken = await AsyncStorage.getItem('userToken');
+    
+    if (userData && userToken) {
+      return {
+        user: JSON.parse(userData),
+        isLoggedIn: true,
+        token: userToken
+      };
+    }
+    
+    return {
+      user: null,
+      isLoggedIn: false,
+      token: null
+    };
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return {
+      user: null,
+      isLoggedIn: false,
+      token: null
+    };
+  }
+};
+
+// Check if user is authenticated
+export const isUserAuthenticated = async (): Promise<boolean> => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    const userData = await AsyncStorage.getItem('userData');
+    return !!(token && userData);
+  } catch (error) {
+    console.error('Error checking authentication:', error);
+    return false;
+  }
+};
+
+// Get user profile by ID 
+export const getUserProfile = async (userId: number) => {
+  try {
+    const res = await axios.get(`${API_URL}/user/${userId}`);
+    return res.data;
+  } catch (err: any) {
+    console.error("Get profile error:", err.response?.data || err.message);
+    
+    let message = "Failed to load profile";
+    
+    if (err.response?.data) {
+      if (typeof err.response.data === 'string') {
+        message = err.response.data;
+      } else if (err.response.data.message) {
+        message = err.response.data.message;
+      }
+    }
+    
+    throw message;
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (userId: number, userData: { username: string; email: string }) => {
+  try {
+    const res = await axios.put(`${API_URL}/user/${userId}`, userData);
+    
+    // Update stored user data
+    if (res.data) {
+      await AsyncStorage.setItem('userData', JSON.stringify(res.data));
+    }
+    
+    return res.data;
+  } catch (err: any) {
+    console.error("Update profile error:", err.response?.data || err.message);
+    
+    let message = "Failed to update profile";
+    
+    if (err.response?.data) {
+      // Handle validation errors
+      if (err.response.data.errors) {
+        if (err.response.data.errors.Username) {
+          message = err.response.data.errors.Username[0];
+        } else if (err.response.data.errors.Email) {
+          message = err.response.data.errors.Email[0];
+        } else {
+          message = err.response.data.title || "Validation failed";
+        }
+      }
+      // Handle conflict errors (username/email taken)
+      else if (err.response.status === 409 && typeof err.response.data === 'string') {
+        message = err.response.data;
+      }
+      // Handle other error formats
+      else if (typeof err.response.data === 'string') {
+        message = err.response.data;
+      } else if (err.response.data.message) {
+        message = err.response.data.message;
+      }
+    }
+    
+    throw message;
+  }
+};
+
+// Refresh user token 
+export const refreshUserToken = async () => {
+  try {
+    const currentToken = await AsyncStorage.getItem('userToken');
+    if (!currentToken) {
+      throw new Error('No token found');
+    }
+    
+    const res = await axios.post(`${API_URL}/user/refresh-token`, {}, {
+      headers: { Authorization: `Bearer ${currentToken}` }
+    });
+    
+    if (res.data.Token) {
+      await AsyncStorage.setItem('userToken', res.data.Token);
+    }
+    
+    return res.data;
+  } catch (err: any) {
+    console.error("Refresh token error:", err.response?.data || err.message);
+    // If refresh fails, logout user
+    await logoutUser();
+    throw "Session expired, please login again";
+  }
+};
+
+// Update user data in AsyncStorage
+export const updateStoredUserData = async (newUserData: { id: number; username: string; email: string }) => {
+  try {
+    await AsyncStorage.setItem('userData', JSON.stringify(newUserData));
+    return true;
+  } catch (error) {
+    console.error('Error updating stored user data:', error);
+    return false;
+  }
+};
+
+// Clear all user session data
+export const clearUserSession = async () => {
+  try {
+    await AsyncStorage.multiRemove(['userToken', 'userData']);
+    console.log('User session cleared successfully');
+    return true;
+  } catch (error) {
+    console.error('Error clearing user session:', error);
+    return false;
   }
 };

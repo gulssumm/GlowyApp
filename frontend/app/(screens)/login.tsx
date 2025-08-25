@@ -6,20 +6,19 @@ import { loginUser } from "../../api";
 
 export default function Login() {
   const router = useRouter();
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
 
   const handleLogin = async () => {
-    if (!name || !password) {
+    if (!email || !password) {
       alert("Please fill in all fields");
       return;
     }
 
     try {
-      const user = await loginUser(name, email, password);
+      const user = await loginUser(email, password);
       // Alert.alert("Login Success", JSON.stringify(name));
-      router.push("/main");
+      router.replace("/main");
     } catch (err) {
       alert(err);
     }
@@ -61,7 +60,7 @@ export default function Login() {
         {/* Forgot Password */}
         <TouchableOpacity 
         style={styles.forgotButton} 
-        onPress={() => router.push("/forgot-password")}
+        onPress={() => router.replace("/forgot-password")}
         >
         <Text style={styles.Link}>Forgot Password?</Text>
         </TouchableOpacity>
@@ -69,7 +68,7 @@ export default function Login() {
         {/* Sign up link */}
         <View style={styles.signupContainer}>
           <Text style={styles.Text}>Don’t you have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/signup")}>
+          <TouchableOpacity onPress={() => router.replace("/signup")}>
             <Text style={styles.Link}>Sign Up</Text>
           </TouchableOpacity>
         </View>

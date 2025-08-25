@@ -154,6 +154,38 @@ namespace GlowyAPI.Controllers
             var users = await _context.Users.ToListAsync();
             return Ok(users);
         }
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound("User not found");
+
+            return Ok(new { user.Id, user.Username, user.Email });
+        }
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound("User not found");
+
+            // Check if username/email are taken by others
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id != id && (u.Username == request.Username || u.Email == request.Email));
+
+            if (existingUser != null)
+                return Conflict("Username or Email already taken by another user");
+
+            user.Username = request.Username;
+            user.Email = request.Email;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { user.Id, user.Username, user.Email });
+        }
+
     }
 }
 
@@ -172,4 +204,10 @@ public class LoginRequest
 
     [Required]
     public string Password { get; set; }
+}
+
+public class UpdateUserRequest
+{
+    public string Username { get; set; }
+    public string Email { get; set; }
 }

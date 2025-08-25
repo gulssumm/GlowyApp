@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Animated,
@@ -14,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getCurrentUser, logoutUser } from "../../api";
 
 // Mock data for jewelry products - replace with your API call later
 const mockJewelries = [
@@ -78,6 +80,12 @@ interface MenuItem {
   dividerAfter?: boolean;
 }
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+}
+
 export default function MainScreen() {
   const router = useRouter();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -85,14 +93,30 @@ export default function MainScreen() {
   const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(2);
   const [slideAnim] = useState(new Animated.Value(-300));
+  
+  // User authentication state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
+  useFocusEffect(
+    useCallback(() => {
+      checkUserAuthStatus();
+    }, [])
+  );
 
-  useEffect(() => {
-    // Simulate API call - replace with actual API call later
-    setTimeout(() => {
-      setJewelries(mockJewelries);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const checkUserAuthStatus = async () => {
+    try {
+      const authStatus = await getCurrentUser();
+      setIsLoggedIn(authStatus.isLoggedIn);
+      if (authStatus.user) {
+        setCurrentUser(authStatus.user);
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+    }
+  };
 
   const handleNavigation = (route: string) => {
     toggleMenu();
@@ -102,69 +126,126 @@ export default function MainScreen() {
   };
 
   const handleComingSoon = (feature: string) => {
-    Alert.alert("Coming Soon", `${feature} feature will be available soon!`);
+    toggleMenu();
+    setTimeout(() => {
+      Alert.alert("Coming Soon", `${feature} feature will be available soon!`);
+    }, 300);
   };
 
-  // Menu items configuration
-  const menuItems: MenuItem[] = [
-    {
-      id: 'home',
-      title: 'Home',
-      icon: 'home',
-      action: () => handleComingSoon('Home'),
-    },
-    {
-      id: 'products',
-      title: 'All Products',
-      icon: 'diamond',
-      action: () => handleComingSoon('All Products'),
-    },
-    {
-      id: 'categories',
-      title: 'Categories',
-      icon: 'grid',
-      action: () => handleComingSoon('Categories'),
-    },
-    {
-      id: 'favorites',
-      title: 'Favorites',
-      icon: 'heart',
-      action: () => handleComingSoon('Favorites'),
-    },
-    {
-      id: 'orders',
-      title: 'My Orders',
-      icon: 'bag',
-      action: () => handleComingSoon('My Orders'),
-      dividerAfter: true,
-    },
-    {
-      id: 'profile',
-      title: 'Profile',
-      icon: 'person',
-      action: () => handleComingSoon('Profile'),
-    },
-    {
-      id: 'settings',
-      title: 'Settings',
-      icon: 'settings',
-      action: () => handleComingSoon('Settings'),
-    },
-    {
-      id: 'support',
-      title: 'Help & Support',
-      icon: 'help-circle',
-      action: () => handleComingSoon('Help & Support'),
-      dividerAfter: true,
-    },
-    {
-      id: 'login',
-      title: 'Sign In / Register',
-      icon: 'log-in',
-      action: () => handleNavigation('/login'),
-      color: '#800080',
-    },
-  ];
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logoutUser();
+              setIsLoggedIn(false);
+              setCurrentUser(null);
+              toggleMenu();
+              Alert.alert("Success", "Logged out successfully!");
+            } catch (error) {
+              console.error("Logout error:", error);
+              Alert.alert("Error", "Failed to logout");
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Menu items configuration - different items based on login status
+  const getMenuItems = (): MenuItem[] => {
+    const commonItems: MenuItem[] = [
+      {
+        id: 'home',
+        title: 'Home',
+        icon: 'home',
+        action: () => handleNavigation('/main'),
+      },
+      {
+        id: 'products',
+        title: 'All Products',
+        icon: 'diamond',
+        action: () => handleComingSoon('All Products'),
+      },
+      {
+        id: 'categories',
+        title: 'Categories',
+        icon: 'grid',
+        action: () => handleComingSoon('Categories'),
+      },
+    ];
+
+    if (isLoggedIn && currentUser) {
+      // Menu items for logged-in users
+      return [
+        ...commonItems,
+        {
+          id: 'favorites',
+          title: 'Favorites',
+          icon: 'heart',
+          action: () => handleComingSoon('Favorites'),
+        },
+        {
+          id: 'orders',
+          title: 'My Orders',
+          icon: 'bag',
+          action: () => handleComingSoon('My Orders'),
+          dividerAfter: true,
+        },
+        {
+          id: 'profile',
+          title: 'Profile',
+          icon: 'person',
+          action: () => handleNavigation('/profile'),
+        },
+        {
+          id: 'settings',
+          title: 'Settings',
+          icon: 'settings',
+          action: () => handleComingSoon('Settings'),
+        },
+        {
+          id: 'support',
+          title: 'Help & Support',
+          icon: 'help-circle',
+          action: () => handleComingSoon('Help & Support'),
+          dividerAfter: true,
+        },
+        {
+          id: 'logout',
+          title: 'Logout',
+          icon: 'log-out',
+          action: () => handleLogout(),
+          color: '#ff4444',
+        },
+      ];
+    } else {
+      // Menu items for non-logged-in users
+      return [
+        ...commonItems,
+        {
+          id: 'support',
+          title: 'Help & Support',
+          icon: 'help-circle',
+          action: () => handleComingSoon('Help & Support'),
+          dividerAfter: true,
+        },
+        {
+          id: 'login',
+          title: 'Sign In / Register',
+          icon: 'log-in',
+          action: () => handleNavigation('/login'),
+          color: '#800080',
+        },
+      ];
+    }
+  };
 
   const toggleMenu = () => {
     if (menuVisible) {
@@ -356,7 +437,11 @@ export default function MainScreen() {
             <View style={styles.menuHeader}>
               <View style={styles.menuTitleContainer}>
                 <Text style={styles.menuTitle}>Glowy ✨</Text>
-                <Text style={styles.menuSubtitle}>Premium Jewelry Store</Text>
+                {isLoggedIn && currentUser ? (
+                  <Text style={styles.menuSubtitle}>Welcome, {currentUser.username}!</Text>
+                ) : (
+                  <Text style={styles.menuSubtitle}>Jewelry Store</Text>
+                )}
               </View>
               <TouchableOpacity onPress={toggleMenu} style={styles.closeButton}>
                 <Ionicons name="close" size={28} color="#800080" />
@@ -365,7 +450,7 @@ export default function MainScreen() {
 
             {/* Menu Items */}
             <ScrollView style={styles.menuItems}>
-              {menuItems.map(renderMenuItem)}
+              {getMenuItems().map(renderMenuItem)}
             </ScrollView>
 
             {/* Menu Footer */}
