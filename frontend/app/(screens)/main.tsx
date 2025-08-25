@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Animated,
   FlatList,
   Image,
@@ -68,12 +69,22 @@ interface Jewellery {
   imageUrl: string;
 }
 
+interface MenuItem {
+  id: string;
+  title: string;
+  icon: string;
+  action: () => void;
+  color?: string;
+  dividerAfter?: boolean;
+}
+
 export default function MainScreen() {
   const router = useRouter();
   const [menuVisible, setMenuVisible] = useState(false);
   const [jewelries, setJewelries] = useState<Jewellery[]>([]);
   const [loading, setLoading] = useState(true);
-  const slideAnim = new Animated.Value(-300);
+  const [cartCount, setCartCount] = useState(2);
+  const [slideAnim] = useState(new Animated.Value(-300));
 
   useEffect(() => {
     // Simulate API call - replace with actual API call later
@@ -82,6 +93,78 @@ export default function MainScreen() {
       setLoading(false);
     }, 1000);
   }, []);
+
+  const handleNavigation = (route: string) => {
+    toggleMenu();
+    setTimeout(() => {
+      router.push(route as any);
+    }, 300);
+  };
+
+  const handleComingSoon = (feature: string) => {
+    Alert.alert("Coming Soon", `${feature} feature will be available soon!`);
+  };
+
+  // Menu items configuration
+  const menuItems: MenuItem[] = [
+    {
+      id: 'home',
+      title: 'Home',
+      icon: 'home',
+      action: () => handleComingSoon('Home'),
+    },
+    {
+      id: 'products',
+      title: 'All Products',
+      icon: 'diamond',
+      action: () => handleComingSoon('All Products'),
+    },
+    {
+      id: 'categories',
+      title: 'Categories',
+      icon: 'grid',
+      action: () => handleComingSoon('Categories'),
+    },
+    {
+      id: 'favorites',
+      title: 'Favorites',
+      icon: 'heart',
+      action: () => handleComingSoon('Favorites'),
+    },
+    {
+      id: 'orders',
+      title: 'My Orders',
+      icon: 'bag',
+      action: () => handleComingSoon('My Orders'),
+      dividerAfter: true,
+    },
+    {
+      id: 'profile',
+      title: 'Profile',
+      icon: 'person',
+      action: () => handleComingSoon('Profile'),
+    },
+    {
+      id: 'settings',
+      title: 'Settings',
+      icon: 'settings',
+      action: () => handleComingSoon('Settings'),
+    },
+    {
+      id: 'support',
+      title: 'Help & Support',
+      icon: 'help-circle',
+      action: () => handleComingSoon('Help & Support'),
+      dividerAfter: true,
+    },
+    {
+      id: 'login',
+      title: 'Sign In / Register',
+      icon: 'log-in',
+      action: () => handleNavigation('/login'),
+      color: '#800080',
+    },
+  ];
 
   const toggleMenu = () => {
     if (menuVisible) {
@@ -102,6 +185,15 @@ export default function MainScreen() {
     }
   };
 
+  const addToCart = (item: Jewellery) => {
+    setCartCount(prevCount => prevCount + 1);
+    Alert.alert(
+      "Added to Cart",
+      `${item.name} has been added to your cart!`,
+      [{ text: "OK" }]
+    );
+  };
+
   const renderJewelryCard = ({ item }: { item: Jewellery }) => (
     <TouchableOpacity style={styles.productCard}>
       <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
@@ -112,13 +204,35 @@ export default function MainScreen() {
         <Text style={styles.productDescription} numberOfLines={2}>
           {item.description}
         </Text>
-        <Text style={styles.productPrice}>${item.price}</Text>
-        <TouchableOpacity style={styles.addToCartButton}>
+        <Text style={styles.productPrice}>${item.price.toLocaleString()}</Text>
+        <TouchableOpacity 
+          style={styles.addToCartButton}
+          onPress={() => addToCart(item)}
+        >
           <Ionicons name="bag-add" size={20} color="#fff" />
           <Text style={styles.addToCartText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
+  );
+
+  const renderMenuItem = (item: MenuItem) => (
+    <View key={item.id}>
+      <TouchableOpacity style={styles.menuItem} onPress={item.action}>
+        <Ionicons 
+          name={item.icon as any} 
+          size={24} 
+          color={item.color || "#666"} 
+        />
+        <Text style={[
+          styles.menuItemText, 
+          item.color && { color: item.color }
+        ]}>
+          {item.title}
+        </Text>
+      </TouchableOpacity>
+      {item.dividerAfter && <View style={styles.menuDivider} />}
+    </View>
   );
 
   return (
@@ -131,11 +245,16 @@ export default function MainScreen() {
         
         <Text style={styles.headerTitle}>Glowy ✨</Text>
         
-        <TouchableOpacity style={styles.cartButton}>
+        <TouchableOpacity 
+          style={styles.cartButton}
+          onPress={() => handleComingSoon('Cart')}
+        >
           <Ionicons name="bag-outline" size={28} color="#800080" />
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>2</Text>
-          </View>
+          {cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -147,25 +266,43 @@ export default function MainScreen() {
           <Text style={styles.heroSubtitle}>
             Handcrafted pieces that make you shine
           </Text>
+          <TouchableOpacity 
+            style={styles.heroButton}
+            onPress={() => router.push('/login')}
+          >
+            <Text style={styles.heroButtonText}>Get Started</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Categories */}
         <View style={styles.categoriesSection}>
           <Text style={styles.sectionTitle}>Categories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity style={styles.categoryCard}>
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => handleComingSoon('Rings')}
+            >
               <Ionicons name="diamond" size={30} color="#800080" />
               <Text style={styles.categoryText}>Rings</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.categoryCard}>
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => handleComingSoon('Necklaces')}
+            >
               <Ionicons name="flower" size={30} color="#800080" />
               <Text style={styles.categoryText}>Necklaces</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.categoryCard}>
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => handleComingSoon('Earrings')}
+            >
               <Ionicons name="leaf" size={30} color="#800080" />
               <Text style={styles.categoryText}>Earrings</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.categoryCard}>
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => handleComingSoon('Bracelets')}
+            >
               <Ionicons name="heart" size={30} color="#800080" />
               <Text style={styles.categoryText}>Bracelets</Text>
             </TouchableOpacity>
@@ -200,64 +337,43 @@ export default function MainScreen() {
         animationType="none"
         onRequestClose={toggleMenu}
       >
-        <TouchableOpacity
-          style={styles.menuOverlay}
-          activeOpacity={1}
-          onPress={toggleMenu}
-        >
+        <View style={styles.menuOverlay}>
+          {/* Clickable overlay to close menu */}
+          <TouchableOpacity
+            style={styles.overlayTouchable}
+            onPress={toggleMenu}
+            activeOpacity={1}
+          />
+          
+          {/* Actual Menu - positioned on the left */}
           <Animated.View
             style={[
               styles.sideMenu,
               { transform: [{ translateX: slideAnim }] },
             ]}
           >
-            <TouchableOpacity onPress={() => {}} />
-            
+            {/* Menu Header */}
             <View style={styles.menuHeader}>
-              <Text style={styles.menuTitle}>Glowy ✨</Text>
-              <TouchableOpacity onPress={toggleMenu}>
+              <View style={styles.menuTitleContainer}>
+                <Text style={styles.menuTitle}>Glowy ✨</Text>
+                <Text style={styles.menuSubtitle}>Premium Jewelry Store</Text>
+              </View>
+              <TouchableOpacity onPress={toggleMenu} style={styles.closeButton}>
                 <Ionicons name="close" size={28} color="#800080" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.menuItems}>
-              <TouchableOpacity style={styles.menuItem}>
-                <Ionicons name="home" size={24} color="#666" />
-                <Text style={styles.menuItemText}>Home</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.menuItem}>
-                <Ionicons name="diamond" size={24} color="#666" />
-                <Text style={styles.menuItemText}>All Products</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.menuItem}>
-                <Ionicons name="heart" size={24} color="#666" />
-                <Text style={styles.menuItemText}>Favorites</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.menuItem}>
-                <Ionicons name="bag" size={24} color="#666" />
-                <Text style={styles.menuItemText}>My Orders</Text>
-              </TouchableOpacity>
-              
-              <View style={styles.menuDivider} />
-              
-              <TouchableOpacity 
-                style={styles.menuItem}
-                onPress={() => {
-                  toggleMenu();
-                  router.push("/login");
-                }}
-              >
-                <Ionicons name="log-in" size={24} color="#800080" />
-                <Text style={[styles.menuItemText, { color: "#800080" }]}>
-                  Sign In / Register
-                </Text>
-              </TouchableOpacity>
+            {/* Menu Items */}
+            <ScrollView style={styles.menuItems}>
+              {menuItems.map(renderMenuItem)}
+            </ScrollView>
+
+            {/* Menu Footer */}
+            <View style={styles.menuFooter}>
+              <Text style={styles.menuFooterText}>Version 1.0.0</Text>
             </View>
           </Animated.View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -325,6 +441,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     textAlign: "center",
+    marginBottom: 20,
+  },
+  heroButton: {
+    backgroundColor: "#800080",
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  heroButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   categoriesSection: {
     padding: 20,
@@ -423,46 +551,89 @@ const styles = StyleSheet.create({
   menuOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-start",
+    position: "relative",
+  },
+  overlayTouchable: {
+    position: "absolute",
+    top: 0,
+    left: 300, // Start after the menu width
+    right: 0,
+    bottom: 0,
+    backgroundColor: "transparent",
   },
   sideMenu: {
-    width: 280,
+    width: 300,
     height: "100%",
     backgroundColor: "#fff",
     paddingTop: 50,
+    position: "absolute",
+    left: 0,
+    top: 0,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 2,
+      height: 0,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   menuHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+  },
+  menuTitleContainer: {
+    flex: 1,
   },
   menuTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#800080",
   },
+  menuSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+  },
+  closeButton: {
+    padding: 5,
+  },
   menuItems: {
-    paddingTop: 20,
+    flex: 1,
+    paddingTop: 10,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 15,
+    borderRadius: 0,
   },
   menuItemText: {
     marginLeft: 15,
     fontSize: 16,
     color: "#333",
+    fontWeight: "500",
   },
   menuDivider: {
     height: 1,
     backgroundColor: "#f0f0f0",
     marginVertical: 10,
     marginHorizontal: 20,
+  },
+  menuFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    alignItems: "center",
+  },
+  menuFooterText: {
+    fontSize: 12,
+    color: "#999",
   },
 });
