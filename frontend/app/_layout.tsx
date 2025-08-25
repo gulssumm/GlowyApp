@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuthProvider } from '../context/AuthContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -13,18 +14,20 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    // Async font loading only occurs in development.
     return null;
   }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-       <Stack
-      screenOptions={{
-        headerShown: false, // hides the top header
-      }}
-    />
-      <StatusBar style="auto" />
+      {/* Wrap everything in AuthProvider */}
+      <AuthProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        />
+        <StatusBar style="auto" />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

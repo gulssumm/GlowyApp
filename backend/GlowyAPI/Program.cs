@@ -10,11 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=glowyapp.db")); // SQLite database file
+    options.UseSqlite("Data Source=glowyapp.db"));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<JwtService>();
 builder.Services.AddScoped<JwtService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -44,7 +44,6 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // Create database if it does not exist
     db.Database.EnsureCreated();
 
     if (!db.Jewelleries.Any())
@@ -62,7 +61,7 @@ using (var scope = app.Services.CreateScope())
         {
             Username = "testuser",
             Email = "test@example.com",
-            Password = BCrypt.Net.BCrypt.HashPassword("123456") // Hash the password!
+            Password = BCrypt.Net.BCrypt.HashPassword("123456")
         };
 
         db.Users.Add(testUser);
@@ -70,8 +69,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// App configuration - moved outside the scope
-// app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

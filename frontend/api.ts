@@ -48,8 +48,9 @@ export const loginUser = async (email: string, password: string) => {
     if (res.data.User) {
       await AsyncStorage.setItem('userData', JSON.stringify(res.data.User));
     }
-    
-    return res.data; // Returns user object or later JWT
+    const { user } = res.data;
+
+    return {id: user.id, username: user.username, email: user.email,}; // Returns normalized user object
   } catch (err: any) {
     console.error("Login error:", err.response?.data || err.message);
     

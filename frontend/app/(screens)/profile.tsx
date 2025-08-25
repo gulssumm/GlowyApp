@@ -1,114 +1,106 @@
-import { getCurrentUser } from "@/api";
+import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
+import { logoutUser as apiLogoutUser, updateUserProfile } from "../../api";
 
 export default function Profile() {
   const router = useRouter();
-  const [user, setUser] = useState({
-    id: 0,
-    username: "",
-    email: ""
-  });
+  const { user: authUser, logout, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState({
-    username: "",
-    email: ""
-  });
+  const [editedUser, setEditedUser] = useState({ username: "", email: "" });
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadUserProfile();
-  }, []);
-
-  const loadUserProfile = async () => {
-    try {
-    const authStatus = await getCurrentUser();
-    if (authStatus.isLoggedIn && authStatus.user) {
-      setUser(authStatus.user);
-      setEditedUser({
-        username: authStatus.user.username,
-        email: authStatus.user.email
-      });
+    if (authUser) {
+      setEditedUser({ username: authUser.username, email: authUser.email });
     }
     setLoading(false);
-  } catch (error) {
-    console.error("Error loading profile:", error);
-    setLoading(false);
-  }
-};
+  }, [authUser]);
 
   const handleSave = async () => {
     if (!editedUser.username.trim() || !editedUser.email.trim()) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
-
-    // Basic email validation
-    if (!editedUser.email.includes("@")) {
+    
+    // Better email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editedUser.email)) {
       Alert.alert("Error", "Please enter a valid email address");
       return;
     }
 
+    setSaving(true);
     try {
-      // TODO: Add actual API call to update user profile
-      // await updateUserProfile(user.id, editedUser);
-      
-      // Mock success for now
-      setUser(prev => ({
-        ...prev,
+      if (!authUser?.id) {
+        throw new Error("User ID not found");
+      }
+
+      const updatedUser = await updateUserProfile(authUser.id, {
         username: editedUser.username,
         email: editedUser.email
-      }));
-      
-      setIsEditing(false);
+      });
+
+      // Update the AuthContext with new user data
+      await updateUser(updatedUser);
+
       Alert.alert("Success", "Profile updated successfully!");
-    } catch (error) {
+      setIsEditing(false);
+    } catch (error: any) {
       console.error("Error updating profile:", error);
-      Alert.alert("Error", "Failed to update profile");
+      Alert.alert("Error", error || "Failed to update profile");
+      
+      // Reset form to original values on error
+      if (authUser) {
+        setEditedUser({ username: authUser.username, email: authUser.email });
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    setEditedUser({
-      username: user.username,
-      email: user.email
-    });
+    if (authUser) {
+      setEditedUser({ username: authUser.username, email: authUser.email });
+    }
     setIsEditing(false);
   };
 
-  const handleChangePassword = () => {
-    router.push("/forgot-password");
-  };
-
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          style: "destructive",
-          onPress: () => {
-            // TODO: Clear user session/token
-            router.replace("/login");
+  const handleLogout = async () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await apiLogoutUser();
+            await logout();
+            router.replace("/welcome");
+          } catch (error) {
+            console.error("Logout error:", error);
+            // Still logout locally even if API call fails
+            await logout();
+            router.replace("/welcome");
           }
         }
-      ]
-    );
+      }
+    ]);
   };
 
+  // Show loading screen if auth is still loading
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -119,39 +111,50 @@ export default function Profile() {
     );
   }
 
+  // Show message if user is not logged in
+  if (!authUser) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Please log in to view your profile</Text>
+          <TouchableOpacity 
+            style={styles.loginButton} 
+            onPress={() => router.replace("/login")}
+          >
+            <Text style={styles.loginButtonText}>Go to Login</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Back Button */}
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color="#800080" />
         </TouchableOpacity>
 
-        {/* Title */}
         <Text style={styles.title}>Profile</Text>
 
-        {/* Profile Info Card */}
         <View style={styles.profileCard}>
-          {/* Avatar Section */}
           <View style={styles.avatarSection}>
             <View style={styles.avatarCircle}>
               <Ionicons name="person" size={40} color="#800080" />
             </View>
-            <Text style={styles.userId}>ID: {user.id}</Text>
+            <Text style={styles.userId}>
+              {authUser.username}
+            </Text>
           </View>
 
-          {/* User Info Form */}
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username</Text>
               <TextInput
                 style={[styles.input, !isEditing && styles.inputDisabled]}
-                value={isEditing ? editedUser.username : user.username}
-                onChangeText={(text) => setEditedUser(prev => ({...prev, username: text}))}
-                editable={isEditing}
+                value={editedUser.username}
+                onChangeText={text => setEditedUser(prev => ({ ...prev, username: text }))}
+                editable={isEditing && !saving}
                 placeholder="Enter username"
                 placeholderTextColor="#aaa"
               />
@@ -161,65 +164,58 @@ export default function Profile() {
               <Text style={styles.label}>Email</Text>
               <TextInput
                 style={[styles.input, !isEditing && styles.inputDisabled]}
-                value={isEditing ? editedUser.email : user.email}
-                onChangeText={(text) => setEditedUser(prev => ({...prev, email: text}))}
-                editable={isEditing}
+                value={editedUser.email}
+                onChangeText={text => setEditedUser(prev => ({ ...prev, email: text }))}
+                editable={isEditing && !saving}
                 placeholder="Enter email"
                 placeholderTextColor="#aaa"
-                keyboardType="email-address"
                 autoCapitalize="none"
+                keyboardType="email-address"
               />
             </View>
           </View>
 
-          {/* Action Buttons */}
           <View style={styles.buttonSection}>
             {isEditing ? (
               <View style={styles.editButtonsRow}>
                 <TouchableOpacity 
-                  style={styles.cancelButton} 
+                  style={[styles.cancelButton, saving && styles.buttonDisabled]} 
                   onPress={handleCancel}
+                  disabled={saving}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  style={styles.saveButton} 
+                  style={[styles.saveButton, saving && styles.buttonDisabled]} 
                   onPress={handleSave}
+                  disabled={saving}
                 >
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <Text style={styles.saveButtonText}>
+                    {saving ? "Saving..." : "Save"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity 
-                style={styles.editButton} 
-                onPress={() => setIsEditing(true)}
-              >
+              <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
                 <Ionicons name="create-outline" size={20} color="#fff" />
                 <Text style={styles.editButtonText}>Edit Profile</Text>
               </TouchableOpacity>
             )}
           </View>
-        </View>
 
-        {/* Additional Options */}
-        <View style={styles.optionsSection}>
-          <TouchableOpacity 
-            style={styles.optionButton}
-            onPress={handleChangePassword}
-          >
-            <Ionicons name="key-outline" size={24} color="#800080" />
-            <Text style={styles.optionText}>Change Password</Text>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" />
-          </TouchableOpacity>
+          <View style={styles.optionsSection}>
+            <TouchableOpacity style={styles.optionButton} onPress={() => router.push("/forgot-password")}>
+              <Ionicons name="key-outline" size={24} color="#800080" />
+              <Text style={styles.optionText}>Change Password</Text>
+              <Ionicons name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.optionButton, styles.logoutButton]}
-            onPress={handleLogout}
-          >
-            <Ionicons name="log-out-outline" size={24} color="#ff4444" />
-            <Text style={[styles.optionText, styles.logoutText]}>Logout</Text>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" />
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.optionButton, styles.logoutButton]} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={24} color="#ff4444" />
+              <Text style={[styles.optionText, styles.logoutText]}>Logout</Text>
+              <Ionicons name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -243,6 +239,18 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: "#666",
+    marginBottom: 20,
+  },
+  loginButton: {
+    backgroundColor: "#800080",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   title: {
     fontSize: 35,
@@ -296,9 +304,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   userId: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "600",
   },
   formSection: {
     marginBottom: 20,
@@ -374,6 +382,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   optionsSection: {
     marginTop: 10,

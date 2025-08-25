@@ -134,7 +134,7 @@ export default function ForgotPassword() {
         {/* Back to Login Link */}
         <TouchableOpacity 
           style={styles.loginLink} 
-          onPress={() => router.push("/login")}
+          onPress={() => router.push("/welcome")}
           disabled={loading}
         >
         </TouchableOpacity>

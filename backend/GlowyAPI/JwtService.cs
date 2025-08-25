@@ -16,7 +16,7 @@ public class JwtService
     public string GenerateToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
+        var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

@@ -3,11 +3,13 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { loginUser } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Login() {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -16,8 +18,8 @@ export default function Login() {
     }
 
     try {
-      const user = await loginUser(email, password);
-      // Alert.alert("Login Success", JSON.stringify(name));
+      const user = await loginUser(email, password); // API returns user object
+      await login(user);    // update AuthContext
       router.replace("/main");
     } catch (err) {
       alert(err);
