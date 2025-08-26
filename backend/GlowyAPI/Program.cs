@@ -1,35 +1,93 @@
-using GlowyAPI.Data;
-using GlowyAPI.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using GlowyAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add Entity Framework
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=glowyapp.db"));
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Register JwtService
 builder.Services.AddScoped<JwtService>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Add JWT Authentication with detailed logging
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.Events = new JwtBearerEvents
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        OnMessageReceived = context =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-            ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
-        };
-    });
+            Console.WriteLine($"JWT: Token received: {context.Token?.Substring(0, 50)}...");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"JWT: Token validated successfully for user: {context.Principal?.Identity?.Name}");
+            var claims = context.Principal?.Claims?.Select(c => $"{c.Type}={c.Value}");
+            Console.WriteLine($"JWT: Claims: {string.Join(", ", claims ?? new string[0])}");
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"JWT: Authentication failed: {context.Exception.Message}");
+            Console.WriteLine($"JWT: Exception details: {context.Exception}");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Console.WriteLine($"JWT: Challenge triggered: {context.Error}, {context.ErrorDescription}");
+            return Task.CompletedTask;
+        }
+    };
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"])),
+        ClockSkew = TimeSpan.Zero
+    };
+
+    // Log the JWT configuration
+    Console.WriteLine($"JWT Config - Issuer: {builder.Configuration["JwtSettings:Issuer"]}");
+    Console.WriteLine($"JWT Config - Audience: {builder.Configuration["JwtSettings:Audience"]}");
+    Console.WriteLine($"JWT Config - SecretKey exists: {!string.IsNullOrEmpty(builder.Configuration["JwtSettings:SecretKey"])}");
+});
+
+// Add Authorization
+builder.Services.AddAuthorization();
+
+// Add Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 var app = builder.Build();
 
@@ -40,37 +98,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Seed database
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-
-    if (!db.Jewelleries.Any())
-    {
-        db.Jewelleries.AddRange(
-            new Jewellery { Name = "Gold Ring", Description = "18K Gold Ring", Price = 1200, ImageUrl = "https://..." },
-            new Jewellery { Name = "Silver Necklace", Description = "Silver Pendant", Price = 450, ImageUrl = "https://..." }
-        );
-        db.SaveChanges();
-    }
-
-    if (!db.Users.Any())
-    {
-        var testUser = new User
-        {
-            Username = "testuser",
-            Email = "test@example.com",
-            Password = BCrypt.Net.BCrypt.HashPassword("123456")
-        };
-
-        db.Users.Add(testUser);
-        db.SaveChanges();
-    }
-}
+app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

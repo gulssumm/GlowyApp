@@ -18,10 +18,21 @@ export default function Login() {
     }
 
     try {
-      const user = await loginUser(email, password); // API returns user object
-      await login(user);    // update AuthContext
-      router.replace("/main");
+      const response = await loginUser(email, password); // API returns user object
+      console.log("Login response:", response); // Debug log
+      
+      // Check if we have the user data (check both cases)
+      const userData = response.user || response.User;
+      if (userData) {
+        console.log("User data from API:", userData); // Debug log
+        await login(userData);    // update AuthContext
+        router.replace("/main");
+      } else {
+        console.error("No user data in response:", response);
+        alert("Login successful but user data is missing");
+      }
     } catch (err) {
+      console.error("Login error:", err);
       alert(err);
     }
   };
@@ -69,7 +80,7 @@ export default function Login() {
 
         {/* Sign up link */}
         <View style={styles.signupContainer}>
-          <Text style={styles.Text}>Don’t you have an account? </Text>
+          <Text style={styles.Text}>Don't you have an account? </Text>
           <TouchableOpacity onPress={() => router.replace("/signup")}>
             <Text style={styles.Link}>Sign Up</Text>
           </TouchableOpacity>

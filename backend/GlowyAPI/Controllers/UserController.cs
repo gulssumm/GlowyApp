@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace GlowyAPI.Controllers
 {
@@ -22,6 +23,33 @@ namespace GlowyAPI.Controllers
             _jwtService = jwtService;
         }
 
+        // Helper method to get current user ID from JWT
+        private int? GetCurrentUserId()
+        {
+            // JWT standard claims mapping:
+            // ClaimTypes.NameIdentifier maps to "nameid" in JWT
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            // Log for debugging
+            _logger.LogInformation("JWT Claims: {Claims}",
+                string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}")));
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                _logger.LogWarning("No NameIdentifier claim found in JWT");
+                return null;
+            }
+
+            if (int.TryParse(userIdClaim, out int userId))
+            {
+                _logger.LogInformation("Current user ID from JWT: {UserId}", userId);
+                return userId;
+            }
+
+            _logger.LogWarning("Could not parse user ID: {UserIdClaim}", userIdClaim);
+            return null;
+        }
+
         // POST: api/users/register
         [HttpPost("register")]
         [AllowAnonymous]
@@ -36,8 +64,8 @@ namespace GlowyAPI.Controllers
             }
 
             var existingUsers = await _context.Users
-        .Where(u => u.Username == user.Username || u.Email == user.Email)
-        .ToListAsync();
+                .Where(u => u.Username == user.Username || u.Email == user.Email)
+                .ToListAsync();
 
             bool usernameTaken = existingUsers.Any(u => u.Username == user.Username);
             bool emailTaken = existingUsers.Any(u => u.Email == user.Email);
@@ -52,11 +80,9 @@ namespace GlowyAPI.Controllers
             else if (emailTaken)
                 return Conflict("Email already registered.");
 
-            // Hash passwords
             try
             {
                 user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
                 return Ok(new { user.Id, user.Username, user.Email });
@@ -65,7 +91,6 @@ namespace GlowyAPI.Controllers
             {
                 return Conflict("Username or Email already taken.");
             }
-
         }
 
         // POST: api/users/login
@@ -73,13 +98,11 @@ namespace GlowyAPI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequest login)
         {
-            // Basic validation to avoid model validation errors
             if (string.IsNullOrWhiteSpace(login.Email) || string.IsNullOrWhiteSpace(login.Password))
             {
                 return Unauthorized("Invalid email or password");
             }
 
-            // Basic email format check to avoid validation errors
             if (!login.Email.Contains("@"))
             {
                 return Unauthorized("Invalid email or password");
@@ -88,14 +111,11 @@ namespace GlowyAPI.Controllers
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == login.Email);
 
-            // Verify user exists and password matches
             if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.Password))
                 return Unauthorized("Invalid email or password");
 
-            // Injected JwtService to generate token
             var token = _jwtService.GenerateToken(user);
 
-            // Return token and user info
             return Ok(new
             {
                 Token = token,
@@ -108,7 +128,6 @@ namespace GlowyAPI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            // Validate input
             if (string.IsNullOrWhiteSpace(request.Email) ||
                 string.IsNullOrWhiteSpace(request.OldPassword) ||
                 string.IsNullOrWhiteSpace(request.NewPassword))
@@ -116,27 +135,23 @@ namespace GlowyAPI.Controllers
                 return BadRequest("All fields are required.");
             }
 
-            // Validate new password length
             if (request.NewPassword.Length < 6)
             {
                 return BadRequest("New password must be at least 6 characters long.");
             }
 
-            // Find user by email and old password
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.OldPassword, user.Password))
                 return Unauthorized("Invalid email or current password.");
 
-            // Update password
             user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
             try
             {
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Password changed successfully for user: {Email}", request.Email);
-
                 return Ok(new { message = "Password changed successfully." });
             }
             catch (Exception ex)
@@ -146,9 +161,9 @@ namespace GlowyAPI.Controllers
             }
         }
 
-        // GET: api/users
+        // GET: api/users - This should be protected in production
         [HttpGet]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> GetAll()
         {
             var users = await _context.Users.ToListAsync();
@@ -159,6 +174,18 @@ namespace GlowyAPI.Controllers
         [Authorize]
         public async Task<IActionResult> GetUser(int id)
         {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized("Invalid token - no user ID found");
+            }
+
+            // Users can only access their own profile
+            if (currentUserId != id)
+            {
+                return Forbid("You can only access your own profile");
+            }
+
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound("User not found");
 
@@ -169,6 +196,38 @@ namespace GlowyAPI.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
         {
+            // Debug logging - add this at the very top
+            Console.WriteLine("=== UpdateUser DEBUG ===");
+            Console.WriteLine($"Request received for user ID: {id}");
+            Console.WriteLine($"Authorization header: {Request.Headers.Authorization}");
+            Console.WriteLine($"User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
+            Console.WriteLine($"User.Identity.Name: {User.Identity?.Name}");
+            Console.WriteLine($"All headers: {string.Join(", ", Request.Headers.Select(h => $"{h.Key}={h.Value}"))}");
+
+            if (User.Claims.Any())
+            {
+                Console.WriteLine($"Claims found: {string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+            }
+            else
+            {
+                Console.WriteLine("No claims found in User object");
+            }
+
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                Console.WriteLine("GetCurrentUserId returned null");
+                return Unauthorized("Invalid token - no user ID found");
+            }
+
+            Console.WriteLine($"Current user ID from JWT: {currentUserId}, Target ID: {id}");
+
+            // Users can only update their own profile
+            if (currentUserId != id)
+            {
+                return Forbid("You can only update your own profile");
+            }
+
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound("User not found");
 
@@ -185,7 +244,20 @@ namespace GlowyAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { user.Id, user.Username, user.Email });
         }
+        [HttpGet("test-auth")]
+        [Authorize]
+        public IActionResult TestAuth()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
 
+            return Ok(new
+            {
+                UserId = userId,
+                Claims = claims,
+                IsAuthenticated = User.Identity.IsAuthenticated
+            });
+        }
     }
 }
 

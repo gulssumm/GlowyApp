@@ -23,11 +23,16 @@ axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('userData');
-      // TODO: Redirect to login screen 
-      console.log('Token expired, user logged out');
+      console.log('401 error received for URL:', error.config?.url);
+      
+      // Only auto-logout for login-related endpoints, not for profile updates
+      if (error.config?.url?.includes('/login') || error.config?.url?.includes('/refresh-token')) {
+        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.removeItem('userData');
+        console.log('Token expired, user logged out');
+      } else {
+        console.log('401 error but not auto-logging out - might be profile update issue');
+      }
     }
     return Promise.reject(error);
   }
@@ -36,23 +41,41 @@ axios.interceptors.response.use(
 // Login
 export const loginUser = async (email: string, password: string) => {
   try {
+    console.log("API: Attempting login for email:", email);
+    
     const res = await axios.post(`${API_URL}/user/login`, {
       email,
       password,
     });
 
-    // Store JWT token
-    if (res.data.Token) {
-      await AsyncStorage.setItem('userToken', res.data.Token);
-    }
-    if (res.data.User) {
-      await AsyncStorage.setItem('userData', JSON.stringify(res.data.User));
-    }
-    const { user } = res.data;
+    console.log("API: Full login response:", res.data);
 
-    return {id: user.id, username: user.username, email: user.email,}; // Returns normalized user object
+    // Store JWT token (check both Token and token)
+    if (res.data.token || res.data.Token) {
+      const token = res.data.token || res.data.Token;
+      await AsyncStorage.setItem('userToken', token);
+      console.log("API: Token stored successfully");
+    } else {
+      console.warn("API: No Token in response");
+    }
+    
+    // Store user data (check both user and User)
+    if (res.data.user || res.data.User) {
+      const userData = res.data.user || res.data.User;
+      console.log("API: User data from response:", userData);
+      await AsyncStorage.setItem('userData', JSON.stringify(userData));
+      console.log("API: User data stored successfully");
+      
+      // Verify what was actually stored
+      const storedData = await AsyncStorage.getItem('userData');
+      console.log("API: Verified stored userData:", storedData);
+    } else {
+      console.warn("API: No User data in response");
+    }
+    
+    return res.data; // Returns user object or later JWT
   } catch (err: any) {
-    console.error("Login error:", err.response?.data || err.message);
+    console.error("API: Login error:", err.response?.data || err.message);
     
     // Handle different error formats like in register
     let message = "Login failed";
@@ -166,6 +189,9 @@ export const getCurrentUser = async () => {
     const userData = await AsyncStorage.getItem('userData');
     const userToken = await AsyncStorage.getItem('userToken');
     
+    console.log("API: getCurrentUser - userData:", userData);
+    console.log("API: getCurrentUser - userToken exists:", !!userToken);
+    
     if (userData && userToken) {
       return {
         user: JSON.parse(userData),
@@ -226,16 +252,31 @@ export const getUserProfile = async (userId: number) => {
 // Update user profile
 export const updateUserProfile = async (userId: number, userData: { username: string; email: string }) => {
   try {
+    console.log(`API: Updating profile for user ID: ${userId}`);
+    console.log(`API: Update data:`, userData);
+    
+    // Check if we have a token before making the request
+    const token = await AsyncStorage.getItem('userToken');
+    console.log(`API: Token exists for update request:`, !!token);
+    if (token) {
+      console.log(`API: Token preview: ${token.substring(0, 50)}...`);
+    }
+    
     const res = await axios.put(`${API_URL}/user/${userId}`, userData);
+    
+    console.log(`API: Profile update response:`, res.data);
     
     // Update stored user data
     if (res.data) {
       await AsyncStorage.setItem('userData', JSON.stringify(res.data));
+      console.log(`API: Updated user data stored successfully`);
     }
     
     return res.data;
   } catch (err: any) {
     console.error("Update profile error:", err.response?.data || err.message);
+    console.error("Update profile error status:", err.response?.status);
+    console.error("Update profile error config:", err.config);
     
     let message = "Failed to update profile";
     

@@ -152,7 +152,7 @@ const handleLogout = () => {
           <Ionicons name="menu" size={28} color="#800080" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Glowy ✨</Text>
-        <TouchableOpacity style={styles.cartButton} onPress={() => handleComingSoon('Cart')}>
+        <TouchableOpacity style={styles.cartButton} onPress={() => router.push('/cart')}>
           <Ionicons name="bag-outline" size={28} color="#800080" />
           {cartCount > 0 && (
             <View style={styles.cartBadge}>

@@ -16,17 +16,15 @@ import { logoutUser as apiLogoutUser, updateUserProfile } from "../../api";
 
 export default function Profile() {
   const router = useRouter();
-  const { user: authUser, logout, updateUser } = useAuth();
+  const { user: authUser, logout, updateUser, loading: authLoading } = useAuth(); // Use AuthContext loading
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState({ username: "", email: "" });
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (authUser) {
       setEditedUser({ username: authUser.username, email: authUser.email });
     }
-    setLoading(false);
   }, [authUser]);
 
   const handleSave = async () => {
@@ -101,7 +99,7 @@ export default function Profile() {
   };
 
   // Show loading screen if auth is still loading
-  if (loading) {
+  if (authLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
@@ -150,28 +148,40 @@ export default function Profile() {
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username</Text>
-              <TextInput
-                style={[styles.input, !isEditing && styles.inputDisabled]}
-                value={editedUser.username}
-                onChangeText={text => setEditedUser(prev => ({ ...prev, username: text }))}
-                editable={isEditing && !saving}
-                placeholder="Enter username"
-                placeholderTextColor="#aaa"
-              />
+              {isEditing ? (
+                <TextInput
+                  style={styles.input}
+                  value={editedUser.username}
+                  onChangeText={text =>
+                    setEditedUser(prev => ({ ...prev, username: text }))
+                  }
+                  editable={!saving}
+                  placeholder="Enter username"
+                  placeholderTextColor="#aaa"
+                />
+              ) : (
+                <Text style={styles.infoText}>{authUser.username}</Text>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={[styles.input, !isEditing && styles.inputDisabled]}
-                value={editedUser.email}
-                onChangeText={text => setEditedUser(prev => ({ ...prev, email: text }))}
-                editable={isEditing && !saving}
-                placeholder="Enter email"
-                placeholderTextColor="#aaa"
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
+              {isEditing ? (
+                <TextInput
+                  style={styles.input}
+                  value={editedUser.email}
+                  onChangeText={text =>
+                    setEditedUser(prev => ({ ...prev, email: text }))
+                  }
+                  editable={!saving}
+                  placeholder="Enter email"
+                  placeholderTextColor="#aaa"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              ) : (
+                <Text style={styles.infoText}>{authUser.email}</Text>
+              )}
             </View>
           </View>
 
@@ -416,4 +426,14 @@ const styles = StyleSheet.create({
   logoutText: {
     color: "#ff4444",
   },
+  infoText: {
+    fontSize: 16,
+    color: "#333",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+  }
 });
