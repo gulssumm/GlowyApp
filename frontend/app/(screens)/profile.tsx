@@ -12,11 +12,11 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { logoutUser as apiLogoutUser, updateUserProfile } from "../../api";
+import { logoutUser as apiLogoutUser, testTokenValidation, updateUserProfile } from "../../api";
 
 export default function Profile() {
   const router = useRouter();
-  const { user: authUser, logout, updateUser, loading: authLoading } = useAuth(); // Use AuthContext loading
+  const { user: authUser, logout, updateUser, loading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState({ username: "", email: "" });
   const [saving, setSaving] = useState(false);
@@ -27,13 +27,23 @@ export default function Profile() {
     }
   }, [authUser]);
 
+  const handleTestToken = async () => {
+    try {
+      console.log("Testing token validation...");
+      const result = await testTokenValidation();
+      Alert.alert("Token Test Success", `Claims found: ${JSON.stringify(result, null, 2)}`);
+    } catch (error: any) {
+      console.error("Token test failed:", error);
+      Alert.alert("Token Test Failed", error.response?.data?.message || error.message);
+    }
+  };
+
   const handleSave = async () => {
     if (!editedUser.username.trim() || !editedUser.email.trim()) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
     
-    // Better email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(editedUser.email)) {
       Alert.alert("Error", "Please enter a valid email address");
@@ -46,19 +56,39 @@ export default function Profile() {
         throw new Error("User ID not found");
       }
 
+      // Test token first
+      console.log("Testing token before update...");
+      await testTokenValidation();
+      console.log("Token validation passed, proceeding with update...");
+
       const updatedUser = await updateUserProfile(authUser.id, {
         username: editedUser.username,
         email: editedUser.email
       });
 
-      // Update the AuthContext with new user data
       await updateUser(updatedUser);
-
       Alert.alert("Success", "Profile updated successfully!");
       setIsEditing(false);
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      Alert.alert("Error", error || "Failed to update profile");
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        Alert.alert("Session Expired", "Please log in again", [
+          {
+            text: "OK",
+            onPress: () => {
+              logout();
+              router.replace("/welcome");
+            }
+          }
+        ]);
+      } else if (error.response?.status === 409) {
+        Alert.alert("Error", "Username or email already taken by another user");
+      } else {
+        const errorMessage = error.response?.data?.message || error.message || "Failed to update profile";
+        Alert.alert("Error", errorMessage);
+      }
       
       // Reset form to original values on error
       if (authUser) {
@@ -89,7 +119,6 @@ export default function Profile() {
             router.replace("/welcome");
           } catch (error) {
             console.error("Logout error:", error);
-            // Still logout locally even if API call fails
             await logout();
             router.replace("/welcome");
           }
@@ -98,7 +127,6 @@ export default function Profile() {
     ]);
   };
 
-  // Show loading screen if auth is still loading
   if (authLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -109,7 +137,6 @@ export default function Profile() {
     );
   }
 
-  // Show message if user is not logged in
   if (!authUser) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -134,6 +161,13 @@ export default function Profile() {
         </TouchableOpacity>
 
         <Text style={styles.title}>Profile</Text>
+
+        {/* Debug Section - Remove this in production */}
+        <View style={styles.debugSection}>
+          <TouchableOpacity style={styles.debugButton} onPress={handleTestToken}>
+            <Text style={styles.debugButtonText}>Test Token (Debug)</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.profileCard}>
           <View style={styles.avatarSection}>
@@ -283,6 +317,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     zIndex: 1,
+  },
+  debugSection: {
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  debugButton: {
+    backgroundColor: "#ff6b6b",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5,
+  },
+  debugButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   profileCard: {
     backgroundColor: "#f8f4ff",

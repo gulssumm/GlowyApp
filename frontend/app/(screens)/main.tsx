@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Animated,
@@ -14,18 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { logoutUser as apiLogoutUser } from "../../api";
+import { logoutUser as apiLogoutUser, getAllJewelries } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
-// Mock data
-const mockJewelries = [
-  { id: 1, name: "Diamond Solitaire Ring", description: "18K White Gold Diamond Ring", price: 2500, imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop&crop=center" },
-  { id: 2, name: "Pearl Necklace", description: "Classic Freshwater Pearl Necklace", price: 450, imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop&crop=center" },
-  { id: 3, name: "Gold Earrings", description: "14K Gold Drop Earrings", price: 680, imageUrl: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop&crop=center" },
-  { id: 4, name: "Silver Bracelet", description: "Sterling Silver Chain Bracelet", price: 180, imageUrl: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&h=400&fit=crop&crop=center" },
-  { id: 5, name: "Ruby Ring", description: "18K Gold Ruby Engagement Ring", price: 3200, imageUrl: "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=400&h=400&fit=crop&crop=center" },
-  { id: 6, name: "Diamond Necklace", description: "White Gold Diamond Tennis Necklace", price: 1850, imageUrl: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop&crop=center" },
-];
 
 interface Jewellery { id: number; name: string; description: string; price: number; imageUrl: string; }
 interface MenuItem { id: string; title: string; icon: string; action: () => void; color?: string; dividerAfter?: boolean; }
@@ -34,9 +25,30 @@ export default function MainScreen() {
   const router = useRouter();
   const { user: currentUser, isLoggedIn, logout, loading } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
-  const [jewelries] = useState<Jewellery[]>(mockJewelries);
+  const [jewelries, setJewelries] = useState<Jewellery[]>([]);
   const [cartCount, setCartCount] = useState(2);
   const [slideAnim] = useState(new Animated.Value(-300));
+
+
+useEffect(() => {
+  const fetchJewelries = async () => {
+    try {
+      const data = await getAllJewelries(); // Use the new API function
+      setJewelries(data);
+    } catch (error) {
+      console.error("Failed to fetch jewelries:", error);
+      // Show user-friendly error message
+      Alert.alert(
+        "Network Error", 
+        "Unable to load products. Please check your connection and try again.",
+        [{ text: "OK" }]
+      );
+    }
+  };
+
+  fetchJewelries();
+}, []);
+
   
 
   const toggleMenu = () => {

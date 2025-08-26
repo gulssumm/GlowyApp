@@ -1,5 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Alert } from 'react-native';
+import api from '../api';
 
 // User type definition
 export interface User {
@@ -22,10 +25,10 @@ export interface AuthContextType {
 // Create the context
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Auth Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Check if user is logged in on app start
   const checkAuthState = async () => {
@@ -39,8 +42,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Error checking auth state:', error);
-      // Clear potentially corrupted data
       await AsyncStorage.multiRemove(['userToken', 'userData']);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -48,68 +51,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Login function
   const login = async (userData: User) => {
-    try {
-      setUser(userData);
-      // Note: Token and userData are already stored in AsyncStorage by the loginUser API call
-    } catch (error) {
-      console.error('Error during login:', error);
-      throw error;
-    }
+    setUser(userData);
   };
 
   // Logout function
   const logout = async () => {
-    try {
-      await AsyncStorage.multiRemove(['userToken', 'userData']);
-      setUser(null);
-    } catch (error) {
-      console.error('Error during logout:', error);
-      // Still set user to null even if AsyncStorage fails
-      setUser(null);
-    }
+    await AsyncStorage.multiRemove(['userToken', 'userData']);
+    setUser(null);
+    router.replace('/login'); // redirect to login
   };
 
-  // Update user function (for profile updates)
+  // Update user function
   const updateUser = async (userData: User) => {
-    try {
-      setUser(userData);
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
-    } catch (error) {
-      console.error('Error updating user:', error);
-      throw error;
-    }
+    setUser(userData);
+    await AsyncStorage.setItem('userData', JSON.stringify(userData));
   };
 
-  // Check auth state on component mount
+  // Auto logout on 401 responses
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        if (error.response?.status === 401) {
+          console.log('Token expired or invalid, logging out...');
+          await logout();
+          Alert.alert('Session expired', 'Please login again.');
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      api.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
+  // Check auth state on mount
   useEffect(() => {
     checkAuthState();
   }, []);
 
-  // Derived state
   const isLoggedIn = user !== null;
 
-  const value: AuthContextType = {
-    user,
-    isLoggedIn,
-    loading,
-    login,
-    logout,
-    updateUser,
-    checkAuthState,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, isLoggedIn, loading, login, logout, updateUser, checkAuthState }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

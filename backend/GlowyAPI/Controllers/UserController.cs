@@ -1,9 +1,10 @@
-﻿using GlowyAPI.Data;
+﻿using BCrypt.Net;
+using GlowyAPI.Data;
 using GlowyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace GlowyAPI.Controllers
@@ -13,273 +14,293 @@ namespace GlowyAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly ILogger<UserController> _logger;
         private readonly JwtService _jwtService;
 
-        public UserController(AppDbContext context, ILogger<UserController> logger, JwtService jwtService)
+        public UserController(AppDbContext context, JwtService jwtService)
         {
             _context = context;
-            _logger = logger;
             _jwtService = jwtService;
         }
 
-        // Helper method to get current user ID from JWT
-        private int? GetCurrentUserId()
+        private int GetCurrentUserId()
         {
-            // JWT standard claims mapping:
-            // ClaimTypes.NameIdentifier maps to "nameid" in JWT
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // Log all available claims for debugging
+            var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
+            Console.WriteLine($"=== EXTRACTING USER ID FROM CLAIMS ===");
+            Console.WriteLine($"Total claims: {allClaims.Count}");
+            Console.WriteLine($"User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
+            Console.WriteLine($"User.Identity.AuthenticationType: {User.Identity?.AuthenticationType}");
 
-            // Log for debugging
-            _logger.LogInformation("JWT Claims: {Claims}",
-                string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}")));
+            foreach (var claim in allClaims)
+            {
+                Console.WriteLine($"  {claim}");
+            }
+
+            // Try multiple possible claim types for user ID in order of preference
+            // Handle both old and new token formats
+            var userIdClaim = User.FindFirst("user_id")?.Value                   // Our custom claim (new format)
+                             ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value  // Standard JWT subject (new format)
+                             ?? User.FindFirst("sub")?.Value                       // Alternative sub format (current token)
+                             ?? User.FindFirst("nameid")?.Value                   // Old format nameid
+                             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value  // .NET standard claim (old format)
+                             ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value; // Full URI format (old token)
+
+            Console.WriteLine($"Found user ID claim: '{userIdClaim}' from available claims");
 
             if (string.IsNullOrEmpty(userIdClaim))
             {
-                _logger.LogWarning("No NameIdentifier claim found in JWT");
-                return null;
+                Console.WriteLine("ERROR: No user ID claim found in any expected format");
+                var claimsInfo = string.Join(", ", allClaims);
+                throw new UnauthorizedAccessException($"No user ID found in token claims. Available claims: {claimsInfo}");
             }
 
-            if (int.TryParse(userIdClaim, out int userId))
+            if (!int.TryParse(userIdClaim, out int currentUserId))
             {
-                _logger.LogInformation("Current user ID from JWT: {UserId}", userId);
-                return userId;
+                Console.WriteLine($"ERROR: Could not parse user ID '{userIdClaim}' to integer");
+                throw new UnauthorizedAccessException($"Invalid user ID format in token: '{userIdClaim}'");
             }
 
-            _logger.LogWarning("Could not parse user ID: {UserIdClaim}", userIdClaim);
-            return null;
+            Console.WriteLine($"Successfully extracted user ID: {currentUserId}");
+            return currentUserId;
         }
 
-        // POST: api/users/register
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> Register([FromBody] User user)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            // Manual validation
-            if (string.IsNullOrWhiteSpace(user.Username) ||
-                string.IsNullOrWhiteSpace(user.Email) ||
-                string.IsNullOrWhiteSpace(user.Password))
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email || u.Username == request.Username))
+                return BadRequest(new { message = "Username or email already exists." });
+
+            var user = new User
             {
-                return BadRequest("All fields are required.");
-            }
+                Username = request.Username,
+                Email = request.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            };
 
-            var existingUsers = await _context.Users
-                .Where(u => u.Username == user.Username || u.Email == user.Email)
-                .ToListAsync();
-
-            bool usernameTaken = existingUsers.Any(u => u.Username == user.Username);
-            bool emailTaken = existingUsers.Any(u => u.Email == user.Email);
-
-            _logger.LogInformation("Debug Register - usernameTaken: {UsernameTaken}, emailTaken: {EmailTaken}",
-                        usernameTaken, emailTaken);
-
-            if (usernameTaken && emailTaken)
-                return Conflict("Username and Email are already taken.");
-            else if (usernameTaken)
-                return Conflict("Username already taken.");
-            else if (emailTaken)
-                return Conflict("Email already registered.");
-
-            try
-            {
-                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                return Ok(new { user.Id, user.Username, user.Email });
-            }
-            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE") == true)
-            {
-                return Conflict("Username or Email already taken.");
-            }
-        }
-
-        // POST: api/users/login
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginRequest login)
-        {
-            if (string.IsNullOrWhiteSpace(login.Email) || string.IsNullOrWhiteSpace(login.Password))
-            {
-                return Unauthorized("Invalid email or password");
-            }
-
-            if (!login.Email.Contains("@"))
-            {
-                return Unauthorized("Invalid email or password");
-            }
-
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == login.Email);
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.Password))
-                return Unauthorized("Invalid email or password");
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
             var token = _jwtService.GenerateToken(user);
-
             return Ok(new
             {
-                Token = token,
-                User = new { user.Id, user.Username, user.Email }
+                token = token,
+                user = new { user.Id, user.Username, user.Email }
             });
         }
 
-        // POST: api/user/change-password
-        [HttpPost("change-password")]
+        [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.OldPassword) ||
-                string.IsNullOrWhiteSpace(request.NewPassword))
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+                return Unauthorized(new { message = "Invalid email or password" });
+
+            var token = _jwtService.GenerateToken(user);
+            return Ok(new
             {
-                return BadRequest("All fields are required.");
-            }
-
-            if (request.NewPassword.Length < 6)
-            {
-                return BadRequest("New password must be at least 6 characters long.");
-            }
-
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.OldPassword, user.Password))
-                return Unauthorized("Invalid email or current password.");
-
-            user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Password changed successfully for user: {Email}", request.Email);
-                return Ok(new { message = "Password changed successfully." });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error changing password for user: {Email}", request.Email);
-                return StatusCode(500, "An error occurred while changing password.");
-            }
-        }
-
-        // GET: api/users - This should be protected in production
-        [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GetAll()
-        {
-            var users = await _context.Users.ToListAsync();
-            return Ok(users);
+                token = token,
+                user = new { user.Id, user.Username, user.Email }
+            });
         }
 
         [HttpGet("{id}")]
         [Authorize]
         public async Task<IActionResult> GetUser(int id)
         {
-            var currentUserId = GetCurrentUserId();
-            if (currentUserId == null)
+            try
             {
-                return Unauthorized("Invalid token - no user ID found");
-            }
+                Console.WriteLine($"=== GET USER REQUEST FOR ID: {id} ===");
+                var currentUserId = GetCurrentUserId();
+                Console.WriteLine($"Current user ID from token: {currentUserId}");
 
-            // Users can only access their own profile
-            if (currentUserId != id)
+                if (currentUserId != id)
+                    return Forbid("You can only access your own profile");
+
+                var user = await _context.Users.FindAsync(id);
+                if (user == null) return NotFound(new { message = "User not found" });
+
+                return Ok(new { user.Id, user.Username, user.Email });
+            }
+            catch (UnauthorizedAccessException ex)
             {
-                return Forbid("You can only access your own profile");
+                Console.WriteLine($"Unauthorized access in GetUser: {ex.Message}");
+                return Unauthorized(new { message = ex.Message });
             }
-
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound("User not found");
-
-            return Ok(new { user.Id, user.Username, user.Email });
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error in GetUser: {ex}");
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
         {
-            // Debug logging - add this at the very top
-            Console.WriteLine("=== UpdateUser DEBUG ===");
-            Console.WriteLine($"Request received for user ID: {id}");
-            Console.WriteLine($"Authorization header: {Request.Headers.Authorization}");
-            Console.WriteLine($"User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
-            Console.WriteLine($"User.Identity.Name: {User.Identity?.Name}");
-            Console.WriteLine($"All headers: {string.Join(", ", Request.Headers.Select(h => $"{h.Key}={h.Value}"))}");
-
-            if (User.Claims.Any())
+            try
             {
-                Console.WriteLine($"Claims found: {string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+                Console.WriteLine($"=== UPDATE USER REQUEST FOR ID: {id} ===");
+                Console.WriteLine($"Request data: Username='{request.Username}', Email='{request.Email}'");
+
+                var currentUserId = GetCurrentUserId();
+                Console.WriteLine($"Current user ID from token: {currentUserId}");
+
+                if (currentUserId != id)
+                {
+                    Console.WriteLine($"Access denied: Current user {currentUserId} trying to update user {id}");
+                    return Forbid("You can only update your own profile");
+                }
+
+                var user = await _context.Users.FindAsync(id);
+                if (user == null)
+                {
+                    Console.WriteLine($"User with ID {id} not found");
+                    return NotFound(new { message = "User not found" });
+                }
+
+                Console.WriteLine($"Found user: ID={user.Id}, Username='{user.Username}', Email='{user.Email}'");
+
+                // Check for username/email duplicates (excluding current user)
+                var existingUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id != id && (u.Username == request.Username || u.Email == request.Email));
+
+                if (existingUser != null)
+                {
+                    Console.WriteLine($"Conflict: Username or Email already taken by user ID {existingUser.Id}");
+                    return Conflict(new { message = "Username or Email already taken by another user" });
+                }
+
+                // Update user fields
+                Console.WriteLine($"Updating user: '{user.Username}' -> '{request.Username}', '{user.Email}' -> '{request.Email}'");
+                user.Username = request.Username;
+                user.Email = request.Email;
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine("User updated successfully in database");
+
+                var result = new { user.Id, user.Username, user.Email };
+                Console.WriteLine($"Returning updated user data: {System.Text.Json.JsonSerializer.Serialize(result)}");
+
+                return Ok(new { user = result });
             }
-            else
+            catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine("No claims found in User object");
+                Console.WriteLine($"Unauthorized access in UpdateUser: {ex.Message}");
+                return Unauthorized(new { message = ex.Message });
             }
-
-            var currentUserId = GetCurrentUserId();
-            if (currentUserId == null)
+            catch (Exception ex)
             {
-                Console.WriteLine("GetCurrentUserId returned null");
-                return Unauthorized("Invalid token - no user ID found");
+                Console.WriteLine($"Unexpected error in UpdateUser: {ex}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
-
-            Console.WriteLine($"Current user ID from JWT: {currentUserId}, Target ID: {id}");
-
-            // Users can only update their own profile
-            if (currentUserId != id)
-            {
-                return Forbid("You can only update your own profile");
-            }
-
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound("User not found");
-
-            // Check if username/email are taken by others
-            var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id != id && (u.Username == request.Username || u.Email == request.Email));
-
-            if (existingUser != null)
-                return Conflict("Username or Email already taken by another user");
-
-            user.Username = request.Username;
-            user.Email = request.Email;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { user.Id, user.Username, user.Email });
         }
-        [HttpGet("test-auth")]
-        [Authorize]
-        public IActionResult TestAuth()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
 
-            return Ok(new
+        [HttpGet("debug-claims")]
+        [Authorize]
+        public IActionResult DebugClaims()
+        {
+            try
             {
-                UserId = userId,
-                Claims = claims,
-                IsAuthenticated = User.Identity.IsAuthenticated
-            });
+                Console.WriteLine("=== DEBUG CLAIMS ENDPOINT CALLED ===");
+
+                var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var subjectClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                var customUserId = User.FindFirst("user_id")?.Value;
+
+                Console.WriteLine($"Total claims found: {claims.Count}");
+                foreach (var claim in claims)
+                {
+                    Console.WriteLine($"  {claim.Type} = {claim.Value}");
+                }
+
+                var currentUserId = GetCurrentUserId(); // This will also log details
+
+                return Ok(new
+                {
+                    AllClaims = claims,
+                    NameIdentifier = nameIdentifier,
+                    SubjectClaim = subjectClaim,
+                    CustomUserId = customUserId,
+                    ExtractedUserId = currentUserId,
+                    IsAuthenticated = User.Identity?.IsAuthenticated,
+                    AuthenticationType = User.Identity?.AuthenticationType,
+                    Identity = User.Identity?.Name
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in debug-claims: {ex}");
+                return StatusCode(500, new { Error = ex.Message, StackTrace = ex.StackTrace });
+            }
+        }
+
+        [HttpPost("change-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            try
+            {
+                Console.WriteLine($"=== CHANGE PASSWORD REQUEST ===");
+                Console.WriteLine($"Email: {request.Email}");
+
+                // Find user by email
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+                if (user == null)
+                {
+                    Console.WriteLine("User not found");
+                    return BadRequest(new { message = "Invalid email or current password" });
+                }
+
+                // Verify current password
+                if (!BCrypt.Net.BCrypt.Verify(request.OldPassword, user.Password))
+                {
+                    Console.WriteLine("Current password verification failed");
+                    return BadRequest(new { message = "Invalid email or current password" });
+                }
+
+                // Update password
+                user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine("Password changed successfully");
+                return Ok(new { message = "Password changed successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error changing password: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
+            }
         }
     }
-}
 
-public class ChangePasswordRequest
-{
-    public string Email { get; set; }
-    public string OldPassword { get; set; }
-    public string NewPassword { get; set; }
-}
+    public class RegisterRequest
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
 
-public class LoginRequest
-{
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; }
+    public class LoginRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
 
-    [Required]
-    public string Password { get; set; }
-}
+    public class UpdateUserRequest
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
 
-public class UpdateUserRequest
-{
-    public string Username { get; set; }
-    public string Email { get; set; }
+    public class ChangePasswordRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string OldPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+    }
 }

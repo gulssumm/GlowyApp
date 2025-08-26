@@ -1,356 +1,208 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from "axios";
+import axios from 'axios';
 import Constants from 'expo-constants';
 
 const API_URL =
   Constants.expoConfig?.extra?.API_URL ??
   Constants.manifest2?.extra?.expoClient?.extra?.API_URL ??
-  "http://192.168.1.25:5000/api"; // fallback default
+  'http://172.16.1.20:5000/api';
 
+const api = axios.create({
+  baseURL: API_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
 
-// AXIOS INTERCEPTORS
-// Add token to all requests automatically
-axios.interceptors.request.use(async (config) => {
+// Attach token automatically
+api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('userToken');
+  console.log("=== REQUEST DEBUG ===");
+  console.log("Request URL:", config.url);
+  console.log("Request Method:", config.method);
+  console.log("Sending token:", token);
+  console.log("Token length:", token?.length || 0);
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log("Authorization header set:", config.headers.Authorization?.substring(0, 20) + "...");
+  } else {
+    console.log("No token found in storage");
   }
   return config;
 });
 
-// Handle token expiration
-axios.interceptors.response.use(
-  (response) => response,
+// Handle token expiration globally
+api.interceptors.response.use(
+  (response) => {
+    console.log("=== RESPONSE SUCCESS ===");
+    console.log("Response status:", response.status);
+    return response;
+  },
   async (error) => {
+    console.log("=== RESPONSE ERROR ===");
+    console.log("Error status:", error.response?.status);
+    console.log("Error data:", error.response?.data);
+    console.log("Error message:", error.message);
+    console.log("Full error response:", JSON.stringify(error.response?.data, null, 2));
+    
     if (error.response?.status === 401) {
-      console.log('401 error received for URL:', error.config?.url);
-      
-      // Only auto-logout for login-related endpoints, not for profile updates
-      if (error.config?.url?.includes('/login') || error.config?.url?.includes('/refresh-token')) {
-        await AsyncStorage.removeItem('userToken');
-        await AsyncStorage.removeItem('userData');
-        console.log('Token expired, user logged out');
-      } else {
-        console.log('401 error but not auto-logging out - might be profile update issue');
-      }
+      console.log('Token expired or invalid. Error details:', error.response?.data);
+      // Don't clear storage here - let the component handle it
     }
     return Promise.reject(error);
   }
 );
 
-// Login
+export default api;
+
+// ===== AUTH FUNCTIONS =====
+
+const clearSession = async () => {
+  await AsyncStorage.multiRemove(['userToken', 'userData']);
+};
+
 export const loginUser = async (email: string, password: string) => {
   try {
-    console.log("API: Attempting login for email:", email);
-    
-    const res = await axios.post(`${API_URL}/user/login`, {
-      email,
-      password,
-    });
+    await clearSession();
+    const res = await api.post('/user/login', { email, password });
 
-    console.log("API: Full login response:", res.data);
+    const token = res.data?.token;
+    const user = res.data?.user;
 
-    // Store JWT token (check both Token and token)
-    if (res.data.token || res.data.Token) {
-      const token = res.data.token || res.data.Token;
-      await AsyncStorage.setItem('userToken', token);
-      console.log("API: Token stored successfully");
-    } else {
-      console.warn("API: No Token in response");
+    if (!token || !user) {
+      console.log('Login response:', res.data);
+      throw new Error('No user data in response');
     }
+
+    await AsyncStorage.setItem('userToken', token);
+    await AsyncStorage.setItem('userData', JSON.stringify(user));
     
-    // Store user data (check both user and User)
-    if (res.data.user || res.data.User) {
-      const userData = res.data.user || res.data.User;
-      console.log("API: User data from response:", userData);
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
-      console.log("API: User data stored successfully");
-      
-      // Verify what was actually stored
-      const storedData = await AsyncStorage.getItem('userData');
-      console.log("API: Verified stored userData:", storedData);
-    } else {
-      console.warn("API: No User data in response");
-    }
-    
-    return res.data; // Returns user object or later JWT
+    console.log("Token stored successfully. Length:", token.length);
+
+    return { token, user };
   } catch (err: any) {
-    console.error("API: Login error:", err.response?.data || err.message);
-    
-    // Handle different error formats like in register
-    let message = "Login failed";
-    
-    if (err.response?.data) {
-      // Handle .NET validation errors
-      if (err.response.data.errors) {
-        message = "Invalid email or password format";
-      }
-      // Handle custom 401 Unauthorized errors from backend 
-      else if (typeof err.response.data === 'string'){
-        message = err.response.data;
-      }
-      // Handle other error formats
-      else if (err.response.data.message){
-        message = err.response.data.message;
-      }
-    }
-    
-    throw message;
+    console.error('Login error:', err);
+    throw err?.response?.data?.message || err?.message || 'Login failed';
   }
 };
 
-// Register
 export const registerUser = async (username: string, email: string, password: string) => {
   try {
-    const res = await axios.post(`${API_URL}/user/register`, {
-      username,
-      email,
-      password
-    });
-    return res.data;
-  }  catch (err: any) {
-    console.log("Full error object:", err.response); // Debugging
-    
-    // Handle different response formats
-    let message = "Registration failed";
-    
-    if (err.response?.data) {
-      if (err.response?.data) {
-      if (err.response.data.errors) {
-        if (err.response.data.errors.Password) {
-          message = err.response.data.errors.Password[0];
-        } else {
-          message = err.response.data.title || "Validation failed";
-        }
-      } else if (typeof err.response.data === 'string') {
-        message = err.response.data;
-      } else if (err.response.data.message) {
-        message = err.response.data.message;
-      } else if (err.response.data.title) {
-        message = err.response.data.title;
-      }
+    await clearSession();
+    const res = await api.post('/user/register', { username, email, password });
+
+    const token = res.data?.token;
+    const user = res.data?.user;
+
+    if (!token || !user) {
+      console.log('Register response:', res.data);
+      throw new Error('No user data in response');
     }
-  }
-    throw message;
+
+    await AsyncStorage.setItem('userToken', token);
+    await AsyncStorage.setItem('userData', JSON.stringify(user));
+
+    return { token, user };
+  } catch (err: any) {
+    console.error('Register error:', err);
+    throw err?.response?.data?.message || err?.message || 'Registration failed';
   }
 };
 
-// Change Password
+export const getUserProfile = async (userId: number) => {
+  try {
+    console.log(`=== GETTING USER PROFILE FOR ID: ${userId} ===`);
+    const res = await api.get(`/user/${userId}`);
+    console.log("Get user profile response:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Get user profile error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+// Add this new function to test token validation
+export const testTokenValidation = async () => {
+  try {
+    console.log("=== TESTING TOKEN VALIDATION ===");
+    const res = await api.get('/user/debug-claims');
+    console.log("Debug claims response:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Token validation test failed:', err);
+    throw err;
+  }
+};
+
+export const updateUserProfile = async (userId: number, updateData: { username: string; email: string }) => {
+  try {
+    console.log("=== UPDATE PROFILE ATTEMPT ===");
+    console.log("User ID:", userId);
+    console.log("Update data:", updateData);
+    
+    // Validate input data
+    if (!updateData.username?.trim() || !updateData.email?.trim()) {
+      throw new Error("Username and email are required");
+    }
+
+    const res = await api.put(`/user/${userId}`, {
+      username: updateData.username.trim(),
+      email: updateData.email.trim()
+    });
+    
+    console.log("Update profile response:", res.data);
+    
+    const userData = res.data?.user || res.data;
+    if (userData) {
+      console.log("Updating local storage with new user data:", userData);
+      await AsyncStorage.setItem('userData', JSON.stringify(userData));
+    } else {
+      console.warn("No user data in update response:", res.data);
+    }
+
+    return userData;
+  } catch (err: any) {
+    console.error('Update user profile error:', err);
+    console.error('Error response status:', err.response?.status);
+    console.error('Error response data:', err.response?.data);
+    console.error('Error message:', err.message);
+    throw err;
+  }
+};
+
+export const logoutUser = async () => {
+  await AsyncStorage.multiRemove(['userToken', 'userData']);
+};
+
+export const getAllJewelries = async () => {
+  try {
+    console.log("=== FETCHING ALL JEWELRIES ===");
+    const res = await api.get('/jewellery');
+    console.log("Jewelries fetched successfully:", res.data.length, "items");
+    return res.data;
+  } catch (err: any) {
+    console.error('Get jewelries error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
 export const changePassword = async (email: string, oldPassword: string, newPassword: string) => {
   try {
-    const res = await axios.post(`${API_URL}/user/change-password`, {
+    console.log("=== CHANGING PASSWORD ===");
+    console.log("Email:", email);
+    
+    const res = await api.post('/user/change-password', {
       email,
       oldPassword,
       newPassword
     });
+    
+    console.log("Password changed successfully:", res.data);
     return res.data;
   } catch (err: any) {
-    console.error("Change password error:", err.response?.data || err.message);
-    
-    let message = "Password change failed";
-    
-    if (err.response?.data) {
-      // Handle .NET validation errors
-      if (err.response.data.errors) {
-        if (err.response.data.errors.NewPassword) {
-          message = err.response.data.errors.NewPassword[0];
-        } else {
-          message = err.response.data.title || "Validation failed";
-        }
-      }
-      // Handle custom errors from backend
-      else if (typeof err.response.data === 'string') {
-        message = err.response.data;
-      }
-      // Handle structured error responses
-      else if (err.response.data.message) {
-        message = err.response.data.message;
-      }
-    }
-    
-    throw message;
-  }
-};
-
-// Logout
-export const logoutUser = async () => {
-  try {
-    await AsyncStorage.removeItem('userToken');
-    await AsyncStorage.removeItem('userData');
-    console.log('User logged out successfully');
-  } catch (error) {
-    console.error('Error during logout:', error);
-  }
-};
-
-// Get current user profile from AsyncStorage
-export const getCurrentUser = async () => {
-  try {
-    const userData = await AsyncStorage.getItem('userData');
-    const userToken = await AsyncStorage.getItem('userToken');
-    
-    console.log("API: getCurrentUser - userData:", userData);
-    console.log("API: getCurrentUser - userToken exists:", !!userToken);
-    
-    if (userData && userToken) {
-      return {
-        user: JSON.parse(userData),
-        isLoggedIn: true,
-        token: userToken
-      };
-    }
-    
-    return {
-      user: null,
-      isLoggedIn: false,
-      token: null
-    };
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return {
-      user: null,
-      isLoggedIn: false,
-      token: null
-    };
-  }
-};
-
-// Check if user is authenticated
-export const isUserAuthenticated = async (): Promise<boolean> => {
-  try {
-    const token = await AsyncStorage.getItem('userToken');
-    const userData = await AsyncStorage.getItem('userData');
-    return !!(token && userData);
-  } catch (error) {
-    console.error('Error checking authentication:', error);
-    return false;
-  }
-};
-
-// Get user profile by ID 
-export const getUserProfile = async (userId: number) => {
-  try {
-    const res = await axios.get(`${API_URL}/user/${userId}`);
-    return res.data;
-  } catch (err: any) {
-    console.error("Get profile error:", err.response?.data || err.message);
-    
-    let message = "Failed to load profile";
-    
-    if (err.response?.data) {
-      if (typeof err.response.data === 'string') {
-        message = err.response.data;
-      } else if (err.response.data.message) {
-        message = err.response.data.message;
-      }
-    }
-    
-    throw message;
-  }
-};
-
-// Update user profile
-export const updateUserProfile = async (userId: number, userData: { username: string; email: string }) => {
-  try {
-    console.log(`API: Updating profile for user ID: ${userId}`);
-    console.log(`API: Update data:`, userData);
-    
-    // Check if we have a token before making the request
-    const token = await AsyncStorage.getItem('userToken');
-    console.log(`API: Token exists for update request:`, !!token);
-    if (token) {
-      console.log(`API: Token preview: ${token.substring(0, 50)}...`);
-    }
-    
-    const res = await axios.put(`${API_URL}/user/${userId}`, userData);
-    
-    console.log(`API: Profile update response:`, res.data);
-    
-    // Update stored user data
-    if (res.data) {
-      await AsyncStorage.setItem('userData', JSON.stringify(res.data));
-      console.log(`API: Updated user data stored successfully`);
-    }
-    
-    return res.data;
-  } catch (err: any) {
-    console.error("Update profile error:", err.response?.data || err.message);
-    console.error("Update profile error status:", err.response?.status);
-    console.error("Update profile error config:", err.config);
-    
-    let message = "Failed to update profile";
-    
-    if (err.response?.data) {
-      // Handle validation errors
-      if (err.response.data.errors) {
-        if (err.response.data.errors.Username) {
-          message = err.response.data.errors.Username[0];
-        } else if (err.response.data.errors.Email) {
-          message = err.response.data.errors.Email[0];
-        } else {
-          message = err.response.data.title || "Validation failed";
-        }
-      }
-      // Handle conflict errors (username/email taken)
-      else if (err.response.status === 409 && typeof err.response.data === 'string') {
-        message = err.response.data;
-      }
-      // Handle other error formats
-      else if (typeof err.response.data === 'string') {
-        message = err.response.data;
-      } else if (err.response.data.message) {
-        message = err.response.data.message;
-      }
-    }
-    
-    throw message;
-  }
-};
-
-// Refresh user token 
-export const refreshUserToken = async () => {
-  try {
-    const currentToken = await AsyncStorage.getItem('userToken');
-    if (!currentToken) {
-      throw new Error('No token found');
-    }
-    
-    const res = await axios.post(`${API_URL}/user/refresh-token`, {}, {
-      headers: { Authorization: `Bearer ${currentToken}` }
-    });
-    
-    if (res.data.Token) {
-      await AsyncStorage.setItem('userToken', res.data.Token);
-    }
-    
-    return res.data;
-  } catch (err: any) {
-    console.error("Refresh token error:", err.response?.data || err.message);
-    // If refresh fails, logout user
-    await logoutUser();
-    throw "Session expired, please login again";
-  }
-};
-
-// Update user data in AsyncStorage
-export const updateStoredUserData = async (newUserData: { id: number; username: string; email: string }) => {
-  try {
-    await AsyncStorage.setItem('userData', JSON.stringify(newUserData));
-    return true;
-  } catch (error) {
-    console.error('Error updating stored user data:', error);
-    return false;
-  }
-};
-
-// Clear all user session data
-export const clearUserSession = async () => {
-  try {
-    await AsyncStorage.multiRemove(['userToken', 'userData']);
-    console.log('User session cleared successfully');
-    return true;
-  } catch (error) {
-    console.error('Error clearing user session:', error);
-    return false;
+    console.error('Change password error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err?.response?.data?.message || err?.message || 'Failed to change password';
   }
 };
