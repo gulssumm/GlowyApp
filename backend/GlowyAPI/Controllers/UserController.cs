@@ -38,11 +38,11 @@ namespace GlowyAPI.Controllers
 
             // Try multiple possible claim types for user ID in order of preference
             // Handle both old and new token formats
-            var userIdClaim = User.FindFirst("user_id")?.Value                   // Our custom claim (new format)
-                             ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value  // Standard JWT subject (new format)
-                             ?? User.FindFirst("sub")?.Value                       // Alternative sub format (current token)
-                             ?? User.FindFirst("nameid")?.Value                   // Old format nameid
-                             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value  // .NET standard claim (old format)
+            var userIdClaim = User.FindFirst("user_id")?.Value                   // Custom claim 
+                             ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value  // Standard JWT subject 
+                             ?? User.FindFirst("sub")?.Value                       // Alternative sub format
+                             ?? User.FindFirst("nameid")?.Value                   // Nameid
+                             ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value  // .NET standard claim
                              ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value; // Full URI format (old token)
 
             Console.WriteLine($"Found user ID claim: '{userIdClaim}' from available claims");

@@ -1,65 +1,95 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { clearCart, getCart, removeFromCart, updateCartItem } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
 interface CartItem {
   id: number;
+  jewelleryId: number;
   name: string;
   description: string;
   price: number;
   imageUrl: string;
   quantity: number;
+  addedAt: string;
 }
 
-// Mock cart data - in a real app, this would come from a state management solution
-const mockCartItems: CartItem[] = [
-  {
-    id: 1,
-    name: "Diamond Solitaire Ring",
-    description: "18K White Gold Diamond Ring",
-    price: 2500,
-    imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop&crop=center",
-    quantity: 1,
-  },
-  {
-    id: 2,
-    name: "Pearl Necklace",
-    description: "Classic Freshwater Pearl Necklace",
-    price: 450,
-    imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop&crop=center",
-    quantity: 1,
-  },
-];
+interface CartData {
+  id: number;
+  items: CartItem[];
+  totalItems: number;
+  totalAmount: number;
+}
 
 export default function CartScreen() {
   const router = useRouter();
   const { user, isLoggedIn } = useAuth();
-  const [cartItems, setCartItems] = useState<CartItem[]>(mockCartItems);
+  const [cartData, setCartData] = useState<CartData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const updateQuantity = (id: number, change: number) => {
-    setCartItems(prevItems =>
-      prevItems.map(item => {
-        if (item.id === id) {
-          const newQuantity = Math.max(1, item.quantity + change);
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      })
-    );
+  const fetchCart = async () => {
+    if (!isLoggedIn) {
+      setCartData(null);
+      setLoading(false);
+      return;
+    }
+
+  try {
+      const data = await getCart();
+      setCartData(data);
+    } catch (error: any) {
+      console.error("Error fetching cart:", error);
+      if (error.response?.status === 401) {
+        // Token expired or invalid
+        Alert.alert("Session Expired", "Please log in again");
+        router.replace("/login");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeItem = (id: number, itemName: string) => {
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchCart();
+    setRefreshing(false);
+  }, [isLoggedIn]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCart();
+    }, [isLoggedIn])
+  );
+
+  const updateQuantity = async (itemId: number, change: number, currentQuantity: number) => {
+    const newQuantity = currentQuantity + change;
+    
+    if (newQuantity < 1) return;
+
+    try {
+      await updateCartItem(itemId, newQuantity);
+      await fetchCart(); // Refresh cart data
+    } catch (error: any) {
+      console.error("Error updating quantity:", error);
+      Alert.alert("Error", "Failed to update item quantity");
+    }
+  };
+
+  const removeItem = async (itemId: number, itemName: string) => {
     Alert.alert(
       "Remove Item",
       `Are you sure you want to remove "${itemName}" from your cart?`,
@@ -68,16 +98,22 @@ export default function CartScreen() {
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => {
-            setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+          onPress: async () => {
+            try {
+              await removeFromCart(itemId);
+              await fetchCart(); // Refresh cart data
+            } catch (error: any) {
+              console.error("Error removing item:", error);
+              Alert.alert("Error", "Failed to remove item from cart");
+            }
           },
         },
       ]
     );
   };
 
-  const clearCart = () => {
-    if (cartItems.length === 0) return;
+  const clearAllItems = async () => {
+    if (!cartData?.items?.length) return;
 
     Alert.alert(
       "Clear Cart",
@@ -87,14 +123,18 @@ export default function CartScreen() {
         {
           text: "Clear All",
           style: "destructive",
-          onPress: () => setCartItems([]),
+          onPress: async () => {
+            try {
+              await clearCart();
+              await fetchCart(); // Refresh cart data
+            } catch (error: any) {
+              console.error("Error clearing cart:", error);
+              Alert.alert("Error", "Failed to clear cart");
+            }
+          },
         },
       ]
     );
-  };
-
-  const calculateTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   const handleCheckout = () => {
@@ -113,12 +153,12 @@ export default function CartScreen() {
       return;
     }
 
-    if (cartItems.length === 0) {
+    if (!cartData?.items?.length) {
       Alert.alert("Empty Cart", "Your cart is empty. Add some items before checkout.");
       return;
     }
 
-    // In a real app, this would navigate to a checkout screen
+    // TODO: Navigate to a checkout screen
     Alert.alert("Checkout", "Checkout functionality will be implemented soon!");
   };
 
@@ -134,7 +174,7 @@ export default function CartScreen() {
         <View style={styles.quantityRow}>
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, -1)}
+            onPress={() => updateQuantity(item.id, -1, item.quantity)}
             disabled={item.quantity <= 1}
           >
             <Ionicons
@@ -146,7 +186,7 @@ export default function CartScreen() {
           <Text style={styles.quantityText}>{item.quantity}</Text>
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, 1)}
+            onPress={() => updateQuantity(item.id, 1, item.quantity)}
           >
             <Ionicons name="add" size={16} color="#800080" />
           </TouchableOpacity>
@@ -164,18 +204,42 @@ export default function CartScreen() {
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
       <Ionicons name="bag-outline" size={80} color="#ccc" />
-      <Text style={styles.emptyCartTitle}>Your cart is empty</Text>
+      <Text style={styles.emptyCartTitle}>
+        {isLoggedIn ? "Your cart is empty" : "Please log in"}
+      </Text>
       <Text style={styles.emptyCartSubtitle}>
-        Discover our beautiful jewelry collection and add items to your cart.
+        ? "Discover our beautiful jewelry collection and add items to your cart."
+        : "Log in to view your cart and save items for later."
       </Text>
       <TouchableOpacity
         style={styles.shopNowButton}
-        onPress={() => router.push("/main")}
+        onPress={() => isLoggedIn ? router.push("/main") : router.push("/login")}
       >
-        <Text style={styles.shopNowButtonText}>Shop Now</Text>
+        <Text style={styles.shopNowButtonText}>
+          {isLoggedIn ? "Shop Now" : "Login"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
+
+  if(loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="chevron-back" size={28} color="#800080" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Shopping Cart</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading cart...</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -188,38 +252,43 @@ export default function CartScreen() {
           <Ionicons name="chevron-back" size={28} color="#800080" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Shopping Cart</Text>
-        {cartItems.length > 0 && (
-          <TouchableOpacity style={styles.clearButton} onPress={clearCart}>
+        {cartData?.items?.length ? (
+          <TouchableOpacity style={styles.clearButton} onPress={clearAllItems}>
             <Text style={styles.clearButtonText}>Clear</Text>
           </TouchableOpacity>
+        ) : (
+          <View style={{ width: 60 }} />
         )}
       </View>
 
       {/* Cart Content */}
-      {cartItems.length === 0 ? (
+      {!isLoggedIn || !cartData?.items?.length ? (
         renderEmptyCart()
       ) : (
         <>
           {/* Cart Items List */}
           <FlatList
-            data={cartItems}
+            data={cartData.items}
             keyExtractor={item => item.id.toString()}
             renderItem={renderCartItem}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.cartList}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           />
 
           {/* Cart Summary */}
           <View style={styles.cartSummary}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
-                Total Items: {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                Total Items: {cartData.totalItems}
               </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.totalLabel}>Total:</Text>
               <Text style={styles.totalAmount}>
-                ${calculateTotal().toLocaleString()}
+                ${cartData.totalAmount.toLocaleString()}
               </Text>
             </View>
             <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
@@ -237,6 +306,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
   },
   header: {
     flexDirection: "row",

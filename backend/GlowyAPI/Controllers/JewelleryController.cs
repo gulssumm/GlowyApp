@@ -70,5 +70,25 @@ namespace GlowyAPI.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        // POST: api/jewellery/bulk
+        [HttpPost("bulk")]
+        public async Task<IActionResult> CreateBulk([FromBody] List<Jewellery> jewelleries)
+        {
+            if (jewelleries == null || jewelleries.Count == 0)
+                return BadRequest("No jewellery data provided.");
+
+            foreach (var jewellery in jewelleries)
+            {
+                jewellery.CreatedAt = DateTime.UtcNow;
+                jewellery.UpdatedAt = DateTime.UtcNow;
+            }
+
+            _context.Jewelleries.AddRange(jewelleries);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Count = jewelleries.Count, Message = "Jewelleries added successfully" });
+        }
+
     }
 }

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Diamond Solitaire Ring",
+    "description": "Classic 18k white gold ring with a flawless round-cut diamond centerpiece.",
+    "price": 2499.99,
+    "imageUrl": "https://images.unsplash.com/photo-1602524812227-5b62a7494a76"
+  },
+  {
+    "name": "Emerald Pendant Necklace",
+    "description": "Elegant necklace featuring a natural emerald surrounded by brilliant diamonds.",
+    "price": 1899.50,
+    "imageUrl": "https://images.unsplash.com/photo-1612817159949-196c7e3a20b2"
+  },
+  {
+    "name": "Gold Hoop Earrings",
+    "description": "Timeless 14k yellow gold hoops with a smooth polished finish.",
+    "price": 499.00,
+    "imageUrl": "https://images.unsplash.com/photo-1599643477219-97e714b1ba9b"
+  },
+  {
+    "name": "Ruby Bracelet",
+    "description": "Luxurious bracelet with deep red rubies set in rose gold links.",
+    "price": 1599.00,
+    "imageUrl": "https://images.unsplash.com/photo-1600185365483-26d7d0b4b64d"
+  },
+  {
+    "name": "Pearl Stud Earrings",
+    "description": "Freshwater pearl studs set in sterling silver for an elegant everyday look.",
+    "price": 220.00,
+    "imageUrl": "https://images.unsplash.com/photo-1589987607627-b2d8a74cc67c"
+  },
+  {
+    "name": "Sapphire Engagement Ring",
+    "description": "Brilliant sapphire center stone with a halo of pavé diamonds.",
+    "price": 2750.00,
+    "imageUrl": "https://images.unsplash.com/photo-1620217267640-8e8ec8f41b2f"
+  },
+  {
+    "name": "Rose Gold Bangle",
+    "description": "Minimalist 14k rose gold bangle bracelet with a sleek modern design.",
+    "price": 450.00,
+    "imageUrl": "https://images.unsplash.com/photo-1600180758895-66edb3aa7b8e"
+  },
+  {
+    "name": "Diamond Tennis Bracelet",
+    "description": "Classic tennis bracelet with hand-selected round diamonds in white gold.",
+    "price": 3499.99,
+    "imageUrl": "https://images.unsplash.com/photo-1621184455862-f8e48e62be06"
+  }
+]

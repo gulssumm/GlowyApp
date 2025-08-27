@@ -225,21 +225,20 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Check how many items exist
-    if (db.Jewelleries.Count() < 6)
-    {
-        db.Jewelleries.AddRange(
-            new Jewellery { Name = "Diamond Solitaire Ring", Description = "18K White Gold Diamond Ring", Price = 2500, ImageUrl = "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop&crop=center" },
-            new Jewellery { Name = "Pearl Necklace", Description = "Classic Freshwater Pearl Necklace", Price = 450, ImageUrl = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop&crop=center" },
-            new Jewellery { Name = "Gold Earrings", Description = "14K Gold Drop Earrings", Price = 680, ImageUrl = "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop&crop=center" },
-            new Jewellery { Name = "Silver Bracelet", Description = "Sterling Silver Chain Bracelet", Price = 180, ImageUrl = "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&h=400&fit=crop&crop=center" },
-            new Jewellery { Name = "Ruby Ring", Description = "18K Gold Ruby Engagement Ring", Price = 3200, ImageUrl = "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=400&h=400&fit=crop&crop=center" },
-            new Jewellery { Name = "Diamond Necklace", Description = "White Gold Diamond Tennis Necklace", Price = 1850, ImageUrl = "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop&crop=center" }
-        );
+    // Show all table names in console
+    var connection = db.Database.GetDbConnection();
+    connection.Open();
+    var command = connection.CreateCommand();
+    command.CommandText = "SELECT name FROM sqlite_master WHERE type='table';";
+    var reader = command.ExecuteReader();
 
-        db.SaveChanges();
-        Console.WriteLine("Seeded jewellery data!");
+    Console.WriteLine("=== TABLES IN DATABASE ===");
+    while (reader.Read())
+    {
+        Console.WriteLine($"Table: {reader["name"]}");
     }
+    reader.Close();
+    connection.Close();
 }
 
 app.Run();

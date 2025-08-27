@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 const API_URL =
   Constants.expoConfig?.extra?.API_URL ??
   Constants.manifest2?.extra?.expoClient?.extra?.API_URL ??
-  'http://172.16.1.20:5000/api';
+  'http://192.168.1.130:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -204,5 +204,82 @@ export const changePassword = async (email: string, oldPassword: string, newPass
     console.error('Change password error:', err);
     console.error('Error response:', err.response?.data);
     throw err?.response?.data?.message || err?.message || 'Failed to change password';
+  }
+};
+
+// ===== CART FUNCTIONS =====
+
+export const getCart = async () => {
+  try {
+    console.log("=== GETTING CART ===");
+    const res = await api.get('/cart');
+    console.log("Cart fetched successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Get cart error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const addToCart = async (jewelleryId: number, quantity: number = 1) => {
+  try {
+    console.log(`=== ADDING TO CART ===`);
+    console.log(`Jewellery ID: ${jewelleryId}, Quantity: ${quantity}`);
+    
+    const res = await api.post('/cart/add', {
+      jewelleryId,
+      quantity
+    });
+    
+    console.log("Added to cart successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Add to cart error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const updateCartItem = async (itemId: number, quantity: number) => {
+  try {
+    console.log(`=== UPDATING CART ITEM ===`);
+    console.log(`Item ID: ${itemId}, New Quantity: ${quantity}`);
+    
+    const res = await api.put(`/cart/update/${itemId}`, { quantity });
+    console.log("Cart item updated successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Update cart item error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const removeFromCart = async (itemId: number) => {
+  try {
+    console.log(`=== REMOVING FROM CART ===`);
+    console.log(`Item ID: ${itemId}`);
+    
+    const res = await api.delete(`/cart/remove/${itemId}`);
+    console.log("Removed from cart successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Remove from cart error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const clearCart = async () => {
+  try {
+    console.log("=== CLEARING CART ===");
+    const res = await api.delete('/cart/clear');
+    console.log("Cart cleared successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Clear cart error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
   }
 };
