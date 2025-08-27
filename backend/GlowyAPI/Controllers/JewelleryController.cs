@@ -16,11 +16,28 @@ namespace GlowyAPI.Controllers
             _context = context;
         }
 
+        private string ProcessImageUrl(string imageUrl)
+        {
+            // If it's already a full URL, return as is
+            if (imageUrl.StartsWith("http://") || imageUrl.StartsWith("https://"))
+                return imageUrl;
+
+            // If it's just a filename, create full local URL
+            return $"{Request.Scheme}://{Request.Host}/images/jewelry/{imageUrl}";
+        }
+
         // GET: api/jewellery
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var items = await _context.Jewelleries.ToListAsync();
+
+            // Process image URLs to ensure they're full URLs
+            foreach (var item in items)
+            {
+                item.ImageUrl = ProcessImageUrl(item.ImageUrl);
+            }
+
             return Ok(items);
         }
 
@@ -30,6 +47,8 @@ namespace GlowyAPI.Controllers
         {
             var item = await _context.Jewelleries.FindAsync(id);
             if (item == null) return NotFound();
+
+            item.ImageUrl = ProcessImageUrl(item.ImageUrl);
             return Ok(item);
         }
 
@@ -37,8 +56,16 @@ namespace GlowyAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Jewellery jewellery)
         {
+            // Store only the filename if it's a local image
+            if (jewellery.ImageUrl.StartsWith($"{Request.Scheme}://{Request.Host}/images/jewelry/"))
+            {
+                jewellery.ImageUrl = Path.GetFileName(jewellery.ImageUrl);
+            }
+
             _context.Jewelleries.Add(jewellery);
             await _context.SaveChangesAsync();
+
+            jewellery.ImageUrl = ProcessImageUrl(jewellery.ImageUrl);
             return CreatedAtAction(nameof(GetById), new { id = jewellery.Id }, jewellery);
         }
 
@@ -48,6 +75,12 @@ namespace GlowyAPI.Controllers
         {
             var existing = await _context.Jewelleries.FindAsync(id);
             if (existing == null) return NotFound();
+
+            // Store only the filename if it's a local image
+            if (jewellery.ImageUrl.StartsWith($"{Request.Scheme}://{Request.Host}/images/jewelry/"))
+            {
+                jewellery.ImageUrl = Path.GetFileName(jewellery.ImageUrl);
+            }
 
             existing.Name = jewellery.Name;
             existing.Description = jewellery.Description;
@@ -66,6 +99,23 @@ namespace GlowyAPI.Controllers
             var item = await _context.Jewelleries.FindAsync(id);
             if (item == null) return NotFound();
 
+            // Delete associated image file if it's a local image
+            if (!item.ImageUrl.StartsWith("http"))
+            {
+                var imagePath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    "jewelry",
+                    item.ImageUrl
+                );
+
+                if (System.IO.File.Exists(imagePath))
+                {
+                    System.IO.File.Delete(imagePath);
+                }
+            }
+
             _context.Jewelleries.Remove(item);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -80,6 +130,12 @@ namespace GlowyAPI.Controllers
 
             foreach (var jewellery in jewelleries)
             {
+                // Process image URLs
+                if (jewellery.ImageUrl.StartsWith($"{Request.Scheme}://{Request.Host}/images/jewelry/"))
+                {
+                    jewellery.ImageUrl = Path.GetFileName(jewellery.ImageUrl);
+                }
+
                 jewellery.CreatedAt = DateTime.UtcNow;
                 jewellery.UpdatedAt = DateTime.UtcNow;
             }
@@ -87,8 +143,13 @@ namespace GlowyAPI.Controllers
             _context.Jewelleries.AddRange(jewelleries);
             await _context.SaveChangesAsync();
 
-            return Ok(new { Count = jewelleries.Count, Message = "Jewelleries added successfully" });
-        }
+            // Return with processed URLs
+            foreach (var jewellery in jewelleries)
+            {
+                jewellery.ImageUrl = ProcessImageUrl(jewellery.ImageUrl);
+            }
 
+            return Ok(new { Count = jewelleries.Count, Message = "Jewelleries added successfully", Data = jewelleries });
+        }
     }
 }

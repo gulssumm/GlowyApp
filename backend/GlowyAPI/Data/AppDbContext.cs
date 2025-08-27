@@ -16,6 +16,96 @@ namespace GlowyAPI.Data
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
 
+        public static void SeedJewelries(AppDbContext context)
+        {
+            if (!context.Jewelleries.Any())
+            {
+                var jewelries = new List<Jewellery>
+        {
+            new Jewellery
+            {
+                Name = "Diamond Ring",
+                Description = "Beautiful diamond engagement ring",
+                Price = 2500.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/diamond-ring.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Jewellery
+            {
+                Name = "Gold Necklace",
+                Description = "Elegant gold necklace with pendant",
+                Price = 850.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/emerald-necklace.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Jewellery
+            {
+                Name = "Diamond Ring",
+                Description = "Beautiful diamond engagement ring",
+                Price = 2500.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/diamond-tennis-bracelet.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Jewellery
+            {
+                Name = "Gold Necklace",
+                Description = "Elegant gold necklace with pendant",
+                Price = 850.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/engagement-ring.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Jewellery
+            {
+                Name = "Diamond Ring",
+                Description = "Beautiful diamond engagement ring",
+                Price = 2500.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/pearl-earrings.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Jewellery
+            {
+                Name = "Gold Necklace",
+                Description = "Elegant gold necklace with pendant",
+                Price = 850.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/rose-gold-bangle.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Jewellery
+            {
+                Name = "Diamond Ring",
+                Description = "Beautiful diamond engagement ring",
+                Price = 2500.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/ruby-bracelet.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Jewellery
+            {
+                Name = "Gold Necklace",
+                Description = "Elegant gold necklace with pendant",
+                Price = 850.00m,
+                ImageUrl = "https://localhost:5000/images/jewelry/gold-earrings.jpg", // Local URL
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }
+        };
+
+                context.Jewelleries.AddRange(jewelries);
+                context.SaveChanges();
+            }
+        }
+
+        // Helper method to generate correct URLs dynamically
+        public static string GetImageUrl(HttpRequest request, string fileName)
+        {
+            return $"{request.Scheme}://{request.Host}/images/jewelry/{fileName}";
+        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

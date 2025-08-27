@@ -189,6 +189,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseStaticFiles(); // This enables serving files from wwwroot
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AllowAll");

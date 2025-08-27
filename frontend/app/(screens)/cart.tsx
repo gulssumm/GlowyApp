@@ -208,8 +208,9 @@ export default function CartScreen() {
         {isLoggedIn ? "Your cart is empty" : "Please log in"}
       </Text>
       <Text style={styles.emptyCartSubtitle}>
+        {isLoggedIn
         ? "Discover our beautiful jewelry collection and add items to your cart."
-        : "Log in to view your cart and save items for later."
+        : "Log in to view your cart and save items for later."}
       </Text>
       <TouchableOpacity
         style={styles.shopNowButton}
