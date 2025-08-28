@@ -15,6 +15,9 @@ namespace GlowyAPI.Data
         public DbSet<Jewellery> Jewelleries { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Address> Addresses { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
 
         public static void SeedJewelries(AppDbContext context)
         {
@@ -182,6 +185,40 @@ namespace GlowyAPI.Data
             modelBuilder.Entity<Jewellery>()
                 .Property(j => j.Price)
                 .HasColumnType("decimal(18,2)");
+
+            // Address configuration
+            modelBuilder.Entity<Address>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Order configuration
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany()
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Address)
+                .WithMany()
+                .HasForeignKey(o => o.AddressId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // OrderItem configuration
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Jewellery)
+                .WithMany()
+                .HasForeignKey(oi => oi.JewelleryId)
+                .OnDelete(DeleteBehavior.Restrict);
+        
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
