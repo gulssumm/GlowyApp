@@ -30,15 +30,26 @@ namespace GlowyAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var items = await _context.Jewelleries.ToListAsync();
-
-            // Process image URLs to ensure they're full URLs
-            foreach (var item in items)
+            try
             {
-                item.ImageUrl = ProcessImageUrl(item.ImageUrl);
-            }
+                var items = await _context.Jewelleries.ToListAsync();
+                Console.WriteLine($"Found {items.Count} jewelry items in database");
 
-            return Ok(items);
+                // Process image URLs to ensure they're full URLs
+                foreach (var item in items)
+                {
+                    var originalUrl = item.ImageUrl;
+                    item.ImageUrl = ProcessImageUrl(item.ImageUrl);
+                    Console.WriteLine($"Item {item.Id}: {originalUrl} -> {item.ImageUrl}");
+                }
+
+                return Ok(items);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetAll: {ex.Message}");
+                return StatusCode(500, new { message = "Error fetching jewelry items" });
+            }
         }
 
         // GET: api/jewellery/5
@@ -150,6 +161,36 @@ namespace GlowyAPI.Controllers
             }
 
             return Ok(new { Count = jewelleries.Count, Message = "Jewelleries added successfully", Data = jewelleries });
+        }
+
+        // Add a debug endpoint to test image URLs
+        [HttpGet("debug/images")]
+        public IActionResult DebugImages()
+        {
+            var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var imagesPath = Path.Combine(wwwrootPath, "images", "jewelry");
+
+            // Always return the same type structure
+            var filesList = new List<object>();
+            if (Directory.Exists(imagesPath))
+            {
+                filesList = Directory.GetFiles(imagesPath).Select(f => new {
+                    FileName = Path.GetFileName(f),
+                    FullUrl = $"{Request.Scheme}://{Request.Host}/images/jewelry/{Path.GetFileName(f)}"
+                }).Cast<object>().ToList();
+            }
+
+            var debugInfo = new
+            {
+                WwwrootPath = wwwrootPath,
+                ImagesPath = imagesPath,
+                ImagesPathExists = Directory.Exists(imagesPath),
+                BaseUrl = $"{Request.Scheme}://{Request.Host}",
+                Files = filesList,
+                FileCount = filesList.Count
+            };
+
+            return Ok(debugInfo);
         }
     }
 }

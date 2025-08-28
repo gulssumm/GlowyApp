@@ -36,7 +36,7 @@ namespace GlowyAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.CartItem", b =>
@@ -63,7 +63,7 @@ namespace GlowyAPI.Migrations
 
                     b.HasIndex("JewelleryId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Jewellery", b =>
@@ -98,7 +98,7 @@ namespace GlowyAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Jewelleries");
+                    b.ToTable("Jewelleries", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.User", b =>
@@ -128,7 +128,7 @@ namespace GlowyAPI.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Cart", b =>

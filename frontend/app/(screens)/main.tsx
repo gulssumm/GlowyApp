@@ -33,8 +33,17 @@ export default function MainScreen() {
 useEffect(() => {
   const fetchJewelries = async () => {
     try {
-      const data = await getAllJewelries(); // Use the new API function
-      setJewelries(data);
+      console.log('Starting to fetch jewelries...');
+      const data = await getAllJewelries();
+      console.log('Fetched jewelries data:', data);
+      console.log('Number of items:', data?.length || 0);
+      
+      if (data && Array.isArray(data)) {
+        setJewelries(data);
+        console.log('Successfully set jewelries state');
+      } else {
+        console.log('Data is not an array:', typeof data, data);
+      }
     } catch (error) {
       console.error("Failed to fetch jewelries:", error);
       // Show user-friendly error message
@@ -48,6 +57,10 @@ useEffect(() => {
 
   fetchJewelries();
 }, []);
+
+// Add this temporary debug render to see what's in your state
+console.log('Current jewelries state:', jewelries);
+console.log('Jewelries length:', jewelries.length);
 
   
 

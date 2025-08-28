@@ -9,7 +9,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CRITICAL: Disable automatic claim mapping BEFORE any JWT configuration
+// Disable automatic claim mapping BEFORE any JWT configuration
 JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
 // Add services to the container
@@ -189,8 +189,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles(); // This enables serving files from wwwroot
+// FIXED: Correct middleware order
 app.UseHttpsRedirection();
+
+// Static files MUST come before CORS and Authentication
+app.UseStaticFiles();
+
 app.UseRouting();
 app.UseCors("AllowAll");
 
@@ -222,9 +226,13 @@ app.MapControllers();
 Console.WriteLine("=== SERVER STARTING ===");
 Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
 
+// ADDED: Database setup and seeding
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Ensure database is created
+    db.Database.EnsureCreated();
 
     // Show all table names in console
     var connection = db.Database.GetDbConnection();
@@ -240,6 +248,36 @@ using (var scope = app.Services.CreateScope())
     }
     reader.Close();
     connection.Close();
+
+    // CRITICAL: Seed the database with jewelry data
+    try
+    {
+        AppDbContext.SeedJewelries(db);
+        Console.WriteLine("=== DATABASE SEEDING COMPLETED ===");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"=== DATABASE SEEDING FAILED: {ex.Message} ===");
+    }
+}
+
+// Log where static files should be served from
+var webRootPath = app.Environment.WebRootPath;
+Console.WriteLine($"=== STATIC FILES INFO ===");
+Console.WriteLine($"WebRootPath: {webRootPath}");
+Console.WriteLine($"Static files will be served from: {webRootPath}");
+if (Directory.Exists(Path.Combine(webRootPath ?? "", "images", "jewelry")))
+{
+    var imageFiles = Directory.GetFiles(Path.Combine(webRootPath, "images", "jewelry"));
+    Console.WriteLine($"Found {imageFiles.Length} image files in jewelry folder");
+    foreach (var file in imageFiles)
+    {
+        Console.WriteLine($"  - {Path.GetFileName(file)}");
+    }
+}
+else
+{
+    Console.WriteLine("WARNING: images/jewelry folder not found!");
 }
 
 app.Run();
