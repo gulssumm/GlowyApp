@@ -2,6 +2,7 @@ using GlowyAPI.Data;
 using GlowyAPI.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -193,7 +194,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // Static files MUST come before CORS and Authentication
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images")),
+    RequestPath = "/images"
+});
 
 app.UseRouting();
 app.UseCors("AllowAll");

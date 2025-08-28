@@ -261,7 +261,7 @@ export const removeFromCart = async (itemId: number) => {
     console.log(`=== REMOVING FROM CART ===`);
     console.log(`Item ID: ${itemId}`);
     
-    const res = await api.delete(`/cart/remove/${itemId}`);
+    const res = await api.delete(`/cart/${itemId}`);
     console.log("Removed from cart successfully:", res.data);
     return res.data;
   } catch (err: any) {

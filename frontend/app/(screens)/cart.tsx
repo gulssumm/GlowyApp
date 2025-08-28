@@ -19,12 +19,13 @@ import { useAuth } from "../../context/AuthContext";
 interface CartItem {
   id: number;
   jewelleryId: number;
+  quantity: number;
+  addedAt: string;
+  // Direct properties (flattened from jewelry)
   name: string;
   description: string;
   price: number;
   imageUrl: string;
-  quantity: number;
-  addedAt: string;
 }
 
 interface CartData {
@@ -50,6 +51,13 @@ export default function CartScreen() {
 
   try {
       const data = await getCart();
+      
+      console.log("Cart data received:", JSON.stringify(data, null, 2));
+      // Debug: Log the structure of cart items
+      if (data?.items?.length > 0) {
+        console.log("First cart item structure:", JSON.stringify(data.items[0], null, 2));
+      }
+
       setCartData(data);
     } catch (error: any) {
       console.error("Error fetching cart:", error);
@@ -162,44 +170,75 @@ export default function CartScreen() {
     Alert.alert("Checkout", "Checkout functionality will be implemented soon!");
   };
 
-  const renderCartItem = ({ item }: { item: CartItem }) => (
-    <View style={styles.cartItemContainer}>
-      <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
-      <View style={styles.itemDetails}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemDescription}>{item.description}</Text>
-        <Text style={styles.itemPrice}>${item.price.toLocaleString()}</Text>
-      </View>
-      <View style={styles.quantityControls}>
-        <View style={styles.quantityRow}>
+const renderCartItem = ({ item }: { item: CartItem }) => {
+  // Construct full image URL if it's just a filename
+  const getImageUrl = (imageUrl: string) => {
+    if (imageUrl.startsWith('http')) {
+      return imageUrl; // Already a full URL
+    }
+    return `http://192.168.1.130:5000/images/jewelry/${imageUrl}`; // Construct full URL
+  };
+
+  const imageUrl = getImageUrl(item.imageUrl);
+  const name = item.name;
+  const description = item.description;
+  const price = item.price;
+    
+    console.log(`Rendering item: ${name}, Image URL: ${imageUrl}`);
+    
+    return (
+      <View style={styles.cartItemContainer}>
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: imageUrl }} 
+            style={styles.itemImage}
+            onError={(e) => {
+              console.log(`Image failed to load for ${name}:`, e.nativeEvent.error);
+              console.log(`Failed URL: ${imageUrl}`);
+            }}
+            onLoad={() => {
+              console.log(`Image loaded successfully for ${name}`);
+            }}
+          />
+        </View>
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName}>{name}</Text>
+          <Text style={styles.itemDescription}>{description}</Text>
+          <View style={styles.priceRow}>
+            <Text style={styles.itemPrice}>${price.toLocaleString()}</Text>
+          </View>
+        </View>
+        <View style={styles.quantityControls}>
+          <View style={styles.quantityRow}>
+            <TouchableOpacity
+              style={[styles.quantityButton, item.quantity <= 1 && styles.quantityButtonDisabled]}
+              onPress={() => updateQuantity(item.id, -1, item.quantity)}
+              disabled={item.quantity <= 1}
+            >
+              <Ionicons
+                name="remove"
+                size={16}
+                color={item.quantity <= 1 ? "#ccc" : "#800080"}
+              />
+            </TouchableOpacity>
+            <Text style={styles.quantityText}>{item.quantity}</Text>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => updateQuantity(item.id, 1, item.quantity)}
+            >
+              <Ionicons name="add" size={16} color="#800080" />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, -1, item.quantity)}
-            disabled={item.quantity <= 1}
+            style={styles.removeButton}
+            onPress={() => removeItem(item.id, name)}
           >
-            <Ionicons
-              name="remove"
-              size={16}
-              color={item.quantity <= 1 ? "#ccc" : "#800080"}
-            />
-          </TouchableOpacity>
-          <Text style={styles.quantityText}>{item.quantity}</Text>
-          <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, 1, item.quantity)}
-          >
-            <Ionicons name="add" size={16} color="#800080" />
+            <Ionicons name="trash-outline" size={18} color="#ff4444" />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => removeItem(item.id, item.name)}
-        >
-          <Ionicons name="trash-outline" size={18} color="#ff4444" />
-        </TouchableOpacity>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
@@ -367,11 +406,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#f5f5f5",
   },
+  imageContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginRight: 15,
+    backgroundColor: "#f8f8f8", // Fallback background
+  },
   itemImage: {
     width: 80,
     height: 80,
     borderRadius: 8,
     marginRight: 15,
+    resizeMode: "cover", // This will crop the image to fit properly
   },
   itemDetails: {
     flex: 1,
@@ -388,6 +436,12 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 8,
     lineHeight: 18,
+  },
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
   },
   itemPrice: {
     fontSize: 18,
@@ -423,6 +477,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
+  },
+  quantityButtonDisabled: {
+    backgroundColor: "#f5f5f5",
   },
   quantityText: {
     fontSize: 16,

@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { logoutUser as apiLogoutUser, getAllJewelries } from "../../api";
+import { addToCart as apiAddToCart, logoutUser as apiLogoutUser, getAllJewelries, getCart } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
 
@@ -26,8 +26,30 @@ export default function MainScreen() {
   const { user: currentUser, isLoggedIn, logout, loading } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const [jewelries, setJewelries] = useState<Jewellery[]>([]);
-  const [cartCount, setCartCount] = useState(2);
+  const [cartCount, setCartCount] = useState(0);
   const [slideAnim] = useState(new Animated.Value(-300));
+  const [addingToCart, setAddingToCart] = useState<number | null>(null); // Track which item is being added
+
+
+// Fetch cart count when component mounts and when user logs in
+const fetchCartCount = async () => {
+  if (!isLoggedIn) {
+    setCartCount(0);
+    return;
+  }
+
+  try {
+    const cartData = await getCart();
+    setCartCount(cartData?.totalItems || 0);
+  } catch (error) {
+    console.error("Failed to fetch cart count:", error);
+    // Don't show error to user, just keep count at 0
+  }
+};
+
+useEffect(() => {
+  fetchCartCount();
+}, [isLoggedIn]); // Re-fetch when login state changes
 
 
 useEffect(() => {
@@ -61,7 +83,7 @@ useEffect(() => {
 // Add this temporary debug render to see what's in your state
 console.log('Current jewelries state:', jewelries);
 console.log('Jewelries length:', jewelries.length);
-
+console.log('Current cart count:', cartCount);
   
 
   const toggleMenu = () => {
@@ -102,6 +124,7 @@ const handleLogout = () => {
           await apiLogoutUser();
           logout();
           setMenuVisible(false);
+          setCartCount(0);  // Reset cart count on logout
           Alert.alert("Success", "Logged out successfully!");
         } catch (error) {
           console.error("Logout error:", error);
@@ -139,9 +162,58 @@ const handleLogout = () => {
   };
 
   const menuItems = useMemo(() => getMenuItems(), [currentUser]);
-  const addToCart = (item: Jewellery) => {
-    setCartCount(prev => prev + 1);
-    Alert.alert("Added to Cart", `${item.name} has been added to your cart!`);
+
+  // Add to cart function
+  const addToCart = async (item: Jewellery) => {
+    // 1. Check if user is logged in
+    if (!isLoggedIn) {
+      Alert.alert(
+        "Login Required", 
+        "Please log in to add items to your cart.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => router.push('/login') }
+        ]
+      );
+      return;
+    }
+
+    // Show loading state
+    setAddingToCart(item.id);
+
+    try {
+      // 2. Call the real API
+      await apiAddToCart(item.id, 1);
+      
+      // 3. Update cart count
+      setCartCount(prev => prev + 1);
+      
+      // 4. Show success message with option to view
+      Alert.alert(
+        "Added to Cart", 
+        `${item.name} has been added to your cart!`,
+        [
+          { text: "Continue Shopping", style: "default" },
+          { text: "View Cart", onPress: () => router.push('/cart') }
+        ]
+      );
+    } catch (error: any) {
+      console.error("Failed to add to cart:", error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        Alert.alert("Session Expired", "Please log in again.");
+        router.push('/login');
+      } else {
+        Alert.alert(
+          "Error", 
+          error.response?.data?.message || "Failed to add item to cart. Please try again."
+        );
+      }
+    } finally {
+      // Clear loading state
+      setAddingToCart(null);
+    }
   };
 
   const renderJewelryCard = ({ item }: { item: Jewellery }) => (
