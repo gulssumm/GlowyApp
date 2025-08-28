@@ -166,8 +166,8 @@ export default function CartScreen() {
       return;
     }
 
-    // TODO: Navigate to a checkout screen
-    Alert.alert("Checkout", "Checkout functionality will be implemented soon!");
+    // Navigate to checkout screen
+    router.push('/checkout');
   };
 
 const renderCartItem = ({ item }: { item: CartItem }) => {

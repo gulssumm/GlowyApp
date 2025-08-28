@@ -283,3 +283,144 @@ export const clearCart = async () => {
     throw err;
   }
 };
+
+// ===== ADDRESS FUNCTIONS =====
+
+export const getUserAddresses = async () => {
+  try {
+    console.log("=== GETTING USER ADDRESSES ===");
+    const res = await api.get('/address');
+    console.log("Addresses fetched successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Get addresses error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const createAddress = async (addressData: {
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault?: boolean;
+}) => {
+  try {
+    console.log("=== CREATING ADDRESS ===");
+    console.log("Address data:", addressData);
+    
+    const res = await api.post('/address', {
+      street: addressData.street,
+      city: addressData.city,
+      state: addressData.state,
+      postalCode: addressData.postalCode,
+      country: addressData.country,
+      isDefault: addressData.isDefault || false
+    });
+    
+    console.log("Address created successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Create address error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const updateAddress = async (addressId: number, addressData: {
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault?: boolean;
+}) => {
+  try {
+    console.log("=== UPDATING ADDRESS ===");
+    console.log("Address ID:", addressId);
+    console.log("Address data:", addressData);
+    
+    const res = await api.put(`/address/${addressId}`, {
+      street: addressData.street,
+      city: addressData.city,
+      state: addressData.state,
+      postalCode: addressData.postalCode,
+      country: addressData.country,
+      isDefault: addressData.isDefault || false
+    });
+    
+    console.log("Address updated successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Update address error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const deleteAddress = async (addressId: number) => {
+  try {
+    console.log("=== DELETING ADDRESS ===");
+    console.log("Address ID:", addressId);
+    
+    const res = await api.delete(`/address/${addressId}`);
+    console.log("Address deleted successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Delete address error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+// ===== ORDER FUNCTIONS =====
+
+export const createOrder = async (orderData: {
+  addressId: number;
+  paymentMethod: string;
+}) => {
+  try {
+    console.log("=== CREATING ORDER ===");
+    console.log("Order data:", orderData);
+    
+    const res = await api.post('/order/create', {
+      addressId: orderData.addressId,
+      paymentMethod: orderData.paymentMethod
+    });
+    
+    console.log("Order created successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Create order error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const getUserOrders = async () => {
+  try {
+    console.log("=== GETTING USER ORDERS ===");
+    const res = await api.get('/order');
+    console.log("Orders fetched successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Get orders error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
+
+export const getOrderById = async (orderId: number) => {
+  try {
+    console.log(`=== GETTING ORDER ${orderId} ===`);
+    const res = await api.get(`/order/${orderId}`);
+    console.log("Order fetched successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Get order error:', err);
+    console.error('Error response:', err.response?.data);
+    throw err;
+  }
+};
