@@ -137,7 +137,7 @@ const handleLogout = () => {
 
   const getMenuItems = (): MenuItem[] => {
     const commonItems: MenuItem[] = [
-      { id: 'home', title: 'Home', icon: 'home', action: () => handleNavigation('/main') },
+      { id: 'home', title: 'Home', icon: 'home', action: () => setMenuVisible(false)},
       { id: 'products', title: 'All Products', icon: 'diamond', action: () => handleComingSoon('All Products') },
       { id: 'categories', title: 'Categories', icon: 'grid', action: () => handleComingSoon('Categories') },
     ];
@@ -146,7 +146,7 @@ const handleLogout = () => {
       return [
         ...commonItems,
         { id: 'favorites', title: 'Favorites', icon: 'heart', action: () => handleComingSoon('Favorites') },
-        { id: 'orders', title: 'My Orders', icon: 'bag', action: () => handleComingSoon('My Orders'), dividerAfter: true },
+        { id: 'orders', title: 'My Orders', icon: 'bag', action: () => handleNavigation('/myorders'), dividerAfter: true },
         { id: 'profile', title: 'Profile', icon: 'person', action: () => handleNavigation('/profile') },
         { id: 'settings', title: 'Settings', icon: 'settings', action: () => handleComingSoon('Settings') },
         { id: 'support', title: 'Help & Support', icon: 'help-circle', action: () => handleComingSoon('Help & Support'), dividerAfter: true },
@@ -174,17 +174,35 @@ const handleLogout = () => {
       {
         id: 'favorites',
         icon: 'heart',
-        action: () => isLoggedIn ? handleComingSoon('Favorites') : router.push('/login'),
+        action: () => isLoggedIn ? handleComingSoon('Favorites') : Alert.alert(
+        "Login Required", 
+        "Please log in to see your favorites.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => router.push('/login') }
+        ])
       },
       {
         id: 'orders',
         icon: 'bag',
-        action: () => isLoggedIn ? handleComingSoon('My Orders') : router.push('/login'),
+        action: () => isLoggedIn ? handleNavigation('/myorders') : Alert.alert(
+        "Login Required", 
+        "Please log in to see your orders.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => router.push('/login') }
+        ])
       },
       {
         id: 'profile',
         icon: 'person',
-        action: () => isLoggedIn ? handleNavigation('/profile') : router.push('/login'),
+        action: () => isLoggedIn ? handleNavigation('/profile') : Alert.alert(
+        "Login Required", 
+        "Please log in to see your profile.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => router.push('/login') }
+        ])
       },
     ];
   };

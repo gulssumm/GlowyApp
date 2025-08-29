@@ -1,4 +1,5 @@
 import { useAuth } from "@/context/AuthContext";
+import { ButtonStyles } from "@/styles/buttons";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -20,6 +21,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState({ username: "", email: "" });
   const [saving, setSaving] = useState(false);
+  const [warning, setWarning] = useState("");
 
   useEffect(() => {
     if (authUser) {
@@ -27,22 +29,12 @@ export default function Profile() {
     }
   }, [authUser]);
 
-  const handleTestToken = async () => {
-    try {
-      console.log("Testing token validation...");
-      const result = await testTokenValidation();
-      Alert.alert("Token Test Success", `Claims found: ${JSON.stringify(result, null, 2)}`);
-    } catch (error: any) {
-      console.error("Token test failed:", error);
-      Alert.alert("Token Test Failed", error.response?.data?.message || error.message);
-    }
-  };
-
   const handleSave = async () => {
     if (!editedUser.username.trim() || !editedUser.email.trim()) {
-      Alert.alert("Error", "Please fill in all fields");
+      setWarning("Please fill in all fields!"); // Set warning message
       return;
     }
+    setWarning(""); // Clear warning message if validation passes
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(editedUser.email)) {
@@ -159,15 +151,14 @@ export default function Profile() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color="#800080" />
         </TouchableOpacity>
+        
+        {warning ? (
+        <TouchableOpacity style={[ButtonStyles.warning, { marginHorizontal: 20, marginBottom: 10 }]}>
+          <Text style={ButtonStyles.text}>{warning}</Text>
+        </TouchableOpacity>
+      ) : null}
 
         <Text style={styles.title}>Profile</Text>
-
-        {/* Debug Section - Remove this in production */}
-        <View style={styles.debugSection}>
-          <TouchableOpacity style={styles.debugButton} onPress={handleTestToken}>
-            <Text style={styles.debugButtonText}>Test Token (Debug)</Text>
-          </TouchableOpacity>
-        </View>
 
         <View style={styles.profileCard}>
           <View style={styles.avatarSection}>

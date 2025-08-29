@@ -73,7 +73,7 @@ export default function ForgotPassword() {
         {/* Back Button */}
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => router.replace("/profile")}
+          onPress={() => router.back()}
           disabled={loading}
         >
           <Ionicons name="chevron-back" size={28} color="#800080" />
