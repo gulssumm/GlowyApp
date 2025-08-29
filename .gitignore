@@ -1,44 +1,97 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# ---------------------------------------
+# React Native / Expo
+# ---------------------------------------
 node_modules/
-
-# Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
+# Metro bundler cache
+.metro-health-check*
+
+# Debug / Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# macOS / OS generated
+.DS_Store
+*.pem
+
+# Local env files (JS side)
+.env*.local
+.env
+
+# TypeScript
+*.tsbuildinfo
+
+# Example app directory
+app-example
+
+
+# ---------------------------------------
+# .NET Core / ASP.NET
+# ---------------------------------------
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+*.exe
+*.dll
+*.pdb
+*.cache
+*.config
+*.manifest
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Entity Framework / Migrations
+*Migrations/*
+!Migrations/__init__.py
+
+# Visual Studio files
+.vs/
+*.dbmdl
+*.bak
+*.log
+*.ldf
+
+# Local env files (API side)
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+
+# ---------------------------------------
+# SQLite
+# ---------------------------------------
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+
+# ---------------------------------------
+# Android / iOS Native
+# ---------------------------------------
+# Android
+*.keystore
 *.jks
+.gradle/
+local.properties
+
+# iOS
+*.orig.*
 *.p8
 *.p12
 *.key
 *.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
-*.tsbuildinfo
-
-app-example
-
-bin/
-obj/
-*.debug
-*.log
+Pods/
+DerivedData/

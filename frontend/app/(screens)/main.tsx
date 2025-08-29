@@ -162,6 +162,33 @@ const handleLogout = () => {
   };
 
   const menuItems = useMemo(() => getMenuItems(), [currentUser]);
+  // Bottom navigation buttons
+  const getBottomNavButtons = () => {
+    return [
+      {
+        id: 'home',
+        icon: 'home',
+        action: () => handleNavigation('/main'),
+        isActive: true // Current screen
+      },
+      {
+        id: 'favorites',
+        icon: 'heart',
+        action: () => isLoggedIn ? handleComingSoon('Favorites') : router.push('/login'),
+      },
+      {
+        id: 'orders',
+        icon: 'bag',
+        action: () => isLoggedIn ? handleComingSoon('My Orders') : router.push('/login'),
+      },
+      {
+        id: 'profile',
+        icon: 'person',
+        action: () => isLoggedIn ? handleNavigation('/profile') : router.push('/login'),
+      },
+    ];
+  };
+
 
   // Add to cart function
   const addToCart = async (item: Jewellery) => {
@@ -240,6 +267,19 @@ const handleLogout = () => {
       {item.dividerAfter && <View style={styles.menuDivider} />}
     </View>
   );
+    const renderBottomNavButton = (button: any) => (
+    <TouchableOpacity
+      key={button.id}
+      style={styles.bottomNavButton}
+      onPress={button.action}
+    >
+      <Ionicons
+        name={button.isActive ? button.icon : `${button.icon}-outline`}
+        size={24}
+        color={button.isActive ? "#800080" : "#666"}
+      />
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -259,15 +299,18 @@ const handleLogout = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      
+      {/* Content with bottom padding to avoid overlap with bottom nav */}
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <Text style={styles.heroTitle}>Discover Beautiful Jewelry</Text>
           <Text style={styles.heroSubtitle}>Handcrafted pieces that make you shine</Text>
-          <TouchableOpacity style={styles.heroButton} onPress={() => router.push('/login')}>
-            <Text style={styles.heroButtonText}>Get Started</Text>
-          </TouchableOpacity>
+          {!isLoggedIn && (
+            <TouchableOpacity style={styles.heroButton} onPress={() => router.push('/login')}>
+              <Text style={styles.heroButtonText}>Get Started</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Categories */}
@@ -297,6 +340,11 @@ const handleLogout = () => {
         </View>
       </ScrollView>
 
+      {/* Fixed Bottom Navigation */}
+      <View style={styles.bottomNavContainer}>
+        {getBottomNavButtons().map(renderBottomNavButton)}
+      </View>
+
       {/* Side Menu */}
       <Modal visible={menuVisible} transparent animationType="none" onRequestClose={toggleMenu}>
         <View style={styles.menuOverlay}>
@@ -317,9 +365,10 @@ const handleLogout = () => {
             </View>
             <ScrollView style={styles.menuItems}>
               {menuItems.map(renderMenuItem)}
-              </ScrollView>
-
-            <View style={styles.menuFooter}><Text style={styles.menuFooterText}>Version 1.0.0</Text></View>
+            </ScrollView>
+            <View style={styles.menuFooter}>
+              <Text style={styles.menuFooterText}>Version 1.0.0</Text>
+            </View>
           </Animated.View>
         </View>
       </Modal>
@@ -372,6 +421,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
+    paddingBottom: 100, // Space for bottom navigation
   },
   heroSection: {
     padding: 20,
@@ -488,18 +540,43 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 4,
   },
+  // Bottom Navigation Styles
+  bottomNavContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 10,
+  },
+  bottomNavButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderRadius: 25,
+    minWidth: 50,
+    minHeight: 50,
+  },
+  // Side Menu Styles
   menuOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     position: "relative",
-  },
-  overlayTouchable: {
-    position: "absolute",
-    top: 0,
-    left: 300, // Start after the menu width
-    right: 0,
-    bottom: 0,
-    backgroundColor: "transparent",
   },
   sideMenu: {
     width: 300,

@@ -3,23 +3,25 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    createAddress,
-    createOrder,
-    getCart,
-    getUserAddresses
+  createAddress,
+  createOrder,
+  getCart,
+  getUserAddresses
 } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
@@ -94,7 +96,6 @@ export default function CheckoutScreen() {
       setCartData(cartResponse);
       setAddresses(addressResponse);
       
-      // Select default address if available
       const defaultAddress = addressResponse.find((addr: Address) => addr.isDefault);
       if (defaultAddress) {
         setSelectedAddressId(defaultAddress.id);
@@ -123,9 +124,17 @@ export default function CheckoutScreen() {
     return `http://192.168.1.130:5000/images/jewelry/${imageUrl}`;
   };
 
+  // Validation function for address form
+  const isAddressFormValid = () => {
+    return addressForm.street.trim() !== '' &&
+           addressForm.city.trim() !== '' &&
+           addressForm.state.trim() !== '' &&
+           addressForm.postalCode.trim() !== '' &&
+           addressForm.country.trim() !== '';
+  };
+
   const handleCreateAddress = async () => {
-    if (!addressForm.street || !addressForm.city || !addressForm.state || 
-        !addressForm.postalCode || !addressForm.country) {
+    if (!isAddressFormValid()) {
       Alert.alert("Error", "Please fill in all address fields");
       return;
     }
@@ -142,11 +151,9 @@ export default function CheckoutScreen() {
         isDefault: false
       });
       
-      // Refresh addresses
       const addressResponse = await getUserAddresses();
       setAddresses(addressResponse);
       
-      // Select the newly created address if it's set as default
       const newAddress = addressResponse.find((addr: Address) => 
         addr.street === addressForm.street && addr.city === addressForm.city
       );
@@ -166,42 +173,28 @@ export default function CheckoutScreen() {
       Alert.alert("Missing Information", "Please select or add a delivery address");
       return false;
     }
-    
     if (!selectedPaymentMethod) {
       Alert.alert("Missing Information", "Please select a payment method");
       return false;
     }
-    
     return true;
   };
 
   const handlePlaceOrder = async () => {
-    if (!validateCheckout()) {
-      return;
-    }
+    if (!validateCheckout()) return;
 
     setSubmitting(true);
-    
     try {
       await createOrder({
         addressId: selectedAddressId!,
         paymentMethod: selectedPaymentMethod
       });
-      
+
       Alert.alert(
         "Order Confirmed",
         "Your order has been confirmed successfully!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Navigate to orders screen or main screen
-              router.replace('/main');
-            }
-          }
-        ]
+        [{ text: "OK", onPress: () => router.replace('/main') }]
       );
-      
     } catch (error: any) {
       console.error("Error placing order:", error);
       Alert.alert("Error", "Failed to place order. Please try again.");
@@ -224,17 +217,12 @@ export default function CheckoutScreen() {
   const renderAddressCard = (address: Address) => (
     <TouchableOpacity
       key={address.id}
-      style={[
-        styles.addressCard,
-        selectedAddressId === address.id && styles.selectedCard
-      ]}
+      style={[styles.addressCard, selectedAddressId === address.id && styles.selectedCard]}
       onPress={() => setSelectedAddressId(address.id)}
     >
-              <View style={styles.addressHeader}>
+      <View style={styles.addressHeader}>
         <View style={styles.radioButton}>
-          {selectedAddressId === address.id && (
-            <View style={styles.radioButtonInner} />
-          )}
+          {selectedAddressId === address.id && <View style={styles.radioButtonInner} />}
         </View>
         {address.isDefault && (
           <View style={styles.defaultBadge}>
@@ -252,17 +240,12 @@ export default function CheckoutScreen() {
   const renderPaymentMethod = (method: typeof PAYMENT_METHODS[0]) => (
     <TouchableOpacity
       key={method.id}
-      style={[
-        styles.paymentCard,
-        selectedPaymentMethod === method.id && styles.selectedCard
-      ]}
+      style={[styles.paymentCard, selectedPaymentMethod === method.id && styles.selectedCard]}
       onPress={() => setSelectedPaymentMethod(method.id)}
     >
       <View style={styles.paymentHeader}>
         <View style={styles.radioButton}>
-          {selectedPaymentMethod === method.id && (
-            <View style={styles.radioButtonInner} />
-          )}
+          {selectedPaymentMethod === method.id && <View style={styles.radioButtonInner} />}
         </View>
         <Ionicons name={method.icon as any} size={24} color="#800080" />
         <Text style={styles.paymentText}>{method.name}</Text>
@@ -298,10 +281,7 @@ export default function CheckoutScreen() {
         <View style={styles.emptyContainer}>
           <Ionicons name="bag-outline" size={80} color="#ccc" />
           <Text style={styles.emptyTitle}>No items to checkout</Text>
-          <TouchableOpacity
-            style={styles.shopButton}
-            onPress={() => router.push('/main')}
-          >
+          <TouchableOpacity style={styles.shopButton} onPress={() => router.push('/main')}>
             <Text style={styles.shopButtonText}>Continue Shopping</Text>
           </TouchableOpacity>
         </View>
@@ -311,7 +291,6 @@ export default function CheckoutScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color="#800080" />
@@ -330,9 +309,7 @@ export default function CheckoutScreen() {
             scrollEnabled={false}
           />
           <View style={styles.totalContainer}>
-            <Text style={styles.totalText}>
-              Total: ${cartData.totalAmount.toLocaleString()}
-            </Text>
+            <Text style={styles.totalText}>Total: ${cartData.totalAmount.toLocaleString()}</Text>
           </View>
         </View>
 
@@ -340,49 +317,34 @@ export default function CheckoutScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Delivery Address</Text>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => setShowAddressModal(true)}
-            >
+            <TouchableOpacity style={styles.addButton} onPress={() => setShowAddressModal(true)}>
               <Ionicons name="add" size={20} color="#800080" />
               <Text style={styles.addButtonText}>Add New</Text>
             </TouchableOpacity>
           </View>
-          
           {addresses.length === 0 ? (
             <View style={styles.emptySection}>
               <Text style={styles.emptySectionText}>No addresses found</Text>
-              <TouchableOpacity
-                style={styles.addFirstButton}
-                onPress={() => setShowAddressModal(true)}
-              >
+              <TouchableOpacity style={styles.addFirstButton} onPress={() => setShowAddressModal(true)}>
                 <Text style={styles.addFirstButtonText}>Add Address</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={styles.addressList}>
-              {addresses.map(renderAddressCard)}
-            </View>
+            <View style={styles.addressList}>{addresses.map(renderAddressCard)}</View>
           )}
         </View>
 
         {/* Payment Method */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Method</Text>
-          <View style={styles.paymentList}>
-            {PAYMENT_METHODS.map(renderPaymentMethod)}
-          </View>
+          <View style={styles.paymentList}>{PAYMENT_METHODS.map(renderPaymentMethod)}</View>
         </View>
       </ScrollView>
 
       {/* Place Order Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[
-            styles.placeOrderButton,
-            (!selectedAddressId || !selectedPaymentMethod || submitting) && 
-            styles.placeOrderButtonDisabled
-          ]}
+          style={[styles.placeOrderButton, (!selectedAddressId || !selectedPaymentMethod || submitting) && styles.placeOrderButtonDisabled]}
           onPress={handlePlaceOrder}
           disabled={!selectedAddressId || !selectedPaymentMethod || submitting}
         >
@@ -405,85 +367,90 @@ export default function CheckoutScreen() {
         onRequestClose={() => setShowAddressModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Address</Text>
-              <TouchableOpacity onPress={() => setShowAddressModal(false)}>
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.modalBody}>
-              <TextInput
-                style={styles.input}
-                placeholder="Street Address"
-                value={addressForm.street}
-                onChangeText={(text) => setAddressForm({...addressForm, street: text})}
-              />
-              
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="City"
-                  value={addressForm.city}
-                  onChangeText={(text) => setAddressForm({...addressForm, city: text})}
-                />
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="State"
-                  value={addressForm.state}
-                  onChangeText={(text) => setAddressForm({...addressForm, state: text})}
-                />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 0, justifyContent: "center" }}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add New Address</Text>
+                <TouchableOpacity onPress={() => setShowAddressModal(false)}>
+                  <Ionicons name="close" size={24} color="#666" />
+                </TouchableOpacity>
               </View>
-              
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="Postal Code"
-                  value={addressForm.postalCode}
-                  onChangeText={(text) => setAddressForm({...addressForm, postalCode: text})}
-                />
-                <TextInput
-                  style={[styles.input, styles.halfInput]}
-                  placeholder="Country"
-                  value={addressForm.country}
-                  onChangeText={(text) => setAddressForm({...addressForm, country: text})}
-                />
-              </View>
-              
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => setAddressForm({...addressForm, isDefault: !addressForm.isDefault})}
+
+              <ScrollView
+                style={styles.modalBody}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
               >
-                <View style={styles.checkbox}>
-                  {addressForm.isDefault && (
-                    <Ionicons name="checkmark" size={16} color="#800080" />
-                  )}
+                <TextInput
+                  style={styles.input}
+                  placeholder="Street Address"
+                  value={addressForm.street}
+                  onChangeText={(text) => setAddressForm({ ...addressForm, street: text })}
+                />
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={[styles.input, styles.halfInput]}
+                    placeholder="City"
+                    value={addressForm.city}
+                    onChangeText={(text) => setAddressForm({ ...addressForm, city: text })}
+                  />
+                  <TextInput
+                    style={[styles.input, styles.halfInput]}
+                    placeholder="State"
+                    value={addressForm.state}
+                    onChangeText={(text) => setAddressForm({ ...addressForm, state: text })}
+                  />
                 </View>
-                <Text style={styles.checkboxText}>Set as default address</Text>
-              </TouchableOpacity>
-            </ScrollView>
-            
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowAddressModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleCreateAddress}
-              >
-                <Text style={styles.saveButtonText}>Save Address</Text>
-              </TouchableOpacity>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={[styles.input, styles.halfInput]}
+                    placeholder="Postal Code"
+                    value={addressForm.postalCode}
+                    onChangeText={(text) => setAddressForm({ ...addressForm, postalCode: text })}
+                  />
+                  <TextInput
+                    style={[styles.input, styles.halfInput]}
+                    placeholder="Country"
+                    value={addressForm.country}
+                    onChangeText={(text) => setAddressForm({ ...addressForm, country: text })}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => setAddressForm({ ...addressForm, isDefault: !addressForm.isDefault })}
+                >
+                  <View style={styles.checkbox}>
+                    {addressForm.isDefault && <Ionicons name="checkmark" size={16} color="#800080" />}
+                  </View>
+                  <Text style={styles.checkboxText}>Set as default address</Text>
+                </TouchableOpacity>
+              </ScrollView>
+
+              <View style={styles.modalFooter}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => setShowAddressModal(false)}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.saveButton, !isAddressFormValid() && styles.saveButtonDisabled]} 
+                  onPress={handleCreateAddress}
+                  disabled={!isAddressFormValid()}
+                >
+                  <Text style={[styles.saveButtonText, !isAddressFormValid() && styles.saveButtonTextDisabled]}>
+                    Save Address
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -739,7 +706,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: "80%",
+    maxHeight: "100%",
   },
   modalHeader: {
     flexDirection: "row",
@@ -821,10 +788,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#800080",
     alignItems: "center",
+    
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#ccc",
   },
   saveButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  saveButtonTextDisabled: {
+    color: "#999",
   },
 });

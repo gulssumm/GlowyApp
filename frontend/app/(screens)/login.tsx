@@ -70,7 +70,7 @@ export default function Login() {
         </TouchableOpacity>
 
         <View style={styles.signupContainer}>
-          <Text style={styles.Text}>Don't have an account? </Text>
+          <Text style={styles.Text}>Don't you have an account? </Text>
           <TouchableOpacity onPress={() => router.replace("/signup")}>
             <Text style={styles.Link}>Sign Up</Text>
           </TouchableOpacity>
