@@ -1,11 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import Constants from 'expo-constants';
 
-const API_URL =
-  Constants.expoConfig?.extra?.API_URL ??
-  Constants.manifest2?.extra?.expoClient?.extra?.API_URL ??
-  'http://192.168.1.130:5000/api';
+const API_URL = process.env.API_URL || 'https://e76cddea9b2e.ngrok-free.app/api';
+
+console.log('Using API URL:', API_URL); // Add this for debugging
 
 const api = axios.create({
   baseURL: API_URL,

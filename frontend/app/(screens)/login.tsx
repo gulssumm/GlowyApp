@@ -39,7 +39,7 @@ export default function Login() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.replace("/main")}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color="#800080" />
         </TouchableOpacity>
 

@@ -152,11 +152,12 @@ export default function Profile() {
           <Ionicons name="chevron-back" size={28} color="#800080" />
         </TouchableOpacity>
         
-        {warning ? (
-        <TouchableOpacity style={[ButtonStyles.warning, { marginHorizontal: 20, marginBottom: 10 }]}>
-          <Text style={ButtonStyles.text}>{warning}</Text>
-        </TouchableOpacity>
-      ) : null}
+        {/* Warning alert component */}
+        {warning && (
+          <View style={[ButtonStyles.warning, { margin: 10 }]}>
+            <Text style={ButtonStyles.text}>{warning}</Text>
+          </View>
+        )}
 
         <Text style={styles.title}>Profile</Text>
 

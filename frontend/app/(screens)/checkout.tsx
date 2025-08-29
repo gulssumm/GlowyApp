@@ -121,7 +121,7 @@ export default function CheckoutScreen() {
     if (imageUrl.startsWith('http')) {
       return imageUrl;
     }
-    return `http://192.168.1.130:5000/images/jewelry/${imageUrl}`;
+    return `http://172.16.1.20:5000/images/jewelry/${imageUrl}`;
   };
 
   // Validation function for address form

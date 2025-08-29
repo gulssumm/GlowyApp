@@ -3,15 +3,15 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    RefreshControl,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { getUserOrders } from "../../api";
 import { useAuth } from "../../context/AuthContext";
@@ -108,7 +108,7 @@ export default function MyOrder() {
     if (imageUrl.startsWith('http')) {
       return imageUrl;
     }
-    return `http://192.168.1.130:5000/images/jewelry/${imageUrl}`;
+    return `http://172.16.1.20:5000/images/jewelry/${imageUrl}`;
   };
 
   const formatDate = (dateString: string) => {
