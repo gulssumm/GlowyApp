@@ -176,7 +176,10 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
     if (imageUrl.startsWith('http')) {
       return imageUrl; // Already a full URL
     }
-    return `http://172.16.1.20:5000/images/jewelry/${imageUrl}`; // Construct full URL
+    const baseUrl = process.env.API_URL?.replace('/api', '');
+    const fullUrl = `${baseUrl}/images/jewelry/${imageUrl}`;
+    console.log('Constructed image URL:', fullUrl);
+    return fullUrl;
   };
 
   const imageUrl = getImageUrl(item.imageUrl);

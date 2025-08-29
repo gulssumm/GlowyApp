@@ -119,9 +119,11 @@ export default function CheckoutScreen() {
 
   const getImageUrl = (imageUrl: string) => {
     if (imageUrl.startsWith('http')) {
-      return imageUrl;
+    return imageUrl;
     }
-    return `http://172.16.1.20:5000/images/jewelry/${imageUrl}`;
+    const fullUrl = `${process.env.API_IMAGE_BASE_URL}/images/jewelry/${imageUrl}`;
+    console.log('Image URL:', fullUrl);
+    return fullUrl;
   };
 
   // Validation function for address form
