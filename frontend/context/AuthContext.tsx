@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     await AsyncStorage.multiRemove(['userToken', 'userData']);
     setUser(null);
-    router.replace('/login'); // redirect to login
+    router.replace('/login');
   };
 
   // Update user function
@@ -67,15 +67,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await AsyncStorage.setItem('userData', JSON.stringify(userData));
   };
 
-  // Auto logout on 401 responses
+  // Auto logout on 401 responses 
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
       (response) => response,
       async (error) => {
-        if (error.response?.status === 401) {
-          console.log('Token expired or invalid, logging out...');
-          await logout();
-          Alert.alert('Session expired', 'Please login again.');
+        // Only auto-logout if user is logged in AND not on login/signup pages
+        if (error.response?.status === 401 && user !== null) {
+          const currentPath = window.location?.pathname || '';
+          const isOnAuthPage = currentPath.includes('/login') || currentPath.includes('/signup');
+          
+          if (!isOnAuthPage) {
+            console.log('Token expired or invalid, logging out...');
+            await logout();
+            Alert.alert('Session expired', 'Please login again.');
+          }
         }
         return Promise.reject(error);
       }
@@ -84,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       api.interceptors.response.eject(interceptor);
     };
-  }, []);
+  }, [user]);
 
   // Check auth state on mount
   useEffect(() => {
