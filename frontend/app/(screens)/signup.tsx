@@ -1,13 +1,16 @@
+import { ButtonStyles } from "@/styles/buttons";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
+  Keyboard,
+  Modal,
   SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from "react-native";
 import { registerUser } from "../../api";
@@ -18,27 +21,50 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [alert, setAlert] = useState({ visible: false, message: "", type: "success" as "success" | "error" });
+
   const isFormValid = username.trim() && email.trim() && password.trim();
 
   const handleSignUp = async () => {
-    if (!isFormValid) {
-      Alert.alert("Error", "Please fill in all fields.");
-      return;
-    }
+  if (!isFormValid) {
+    setAlert({ visible: true, message: "Please fill in all fields.", type: "error" });
+    return;
+  }
 
-    try {
-      const newUser = await registerUser(username, email, password);
-      console.log("Registration successful:", newUser); 
-      Alert.alert("Success", "User registered successfully!");
-      router.push("/login");
-    } catch (err: any) {
-      console.log("Registration failed:", err); 
-      Alert.alert("Registration Failed", err.toString());
-    }
-  };
+  // Email validation - check if email contains @ symbol
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    setAlert({ 
+      visible: true, 
+      message: "Please enter a valid email address with @ symbol.", 
+      type: "error" 
+    });
+    return;
+  }
+
+  // Password length validation 
+  if (password.length < 6) {
+    setAlert({ 
+      visible: true, 
+      message: "Password must be at least 6 characters long.", 
+      type: "error" 
+    });
+    return;
+  }
+
+  try {
+    const newUser = await registerUser(username, email, password);
+    console.log("Registration successful:", newUser); 
+    setAlert({ visible: true, message: "User registered successfully!", type: "success" });
+  } catch (err: any) {
+    console.log("Registration failed:", err); 
+    setAlert({ visible: true, message: "Registration Failed: " + err.toString(), type: "error" });
+  }
+};
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
         <View style={styles.container}>
           {/* Back Button */}
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -63,6 +89,11 @@ export default function SignUpScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="none"
+            autoComplete="off"
+            importantForAutofill="no"
           />
           <TextInput
             placeholder="Email Address"
@@ -85,7 +116,33 @@ export default function SignUpScreen() {
             <Text style={styles.signUpText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
-    </SafeAreaView>
+
+        {/* Custom Alert Modal */}
+        <Modal transparent={true} visible={alert.visible} animationType="fade">
+          <View style={ButtonStyles.alertOverlay}>
+            <View style={ButtonStyles.alertBox}>
+              <View style={ButtonStyles.alertIcon}>
+                <Ionicons
+                  name={alert.type === "success" ? "checkmark-circle" : "alert-circle"}
+                  size={50}
+                  color={alert.type === "success" ? "#4CAF50" : "#ff4444"}
+                />
+              </View>
+              <Text style={ButtonStyles.alertMessage}>{alert.message}</Text>
+              <TouchableOpacity
+                style={ButtonStyles.alertButton}
+                onPress={() => {
+                  setAlert({ ...alert, visible: false });
+                  if (alert.type === "success") router.push("/login");
+                }}
+              >
+                <Text style={ButtonStyles.alertButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -95,7 +152,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: "center",
-    alignItems: "stretch", // ensures vertical stacking
+    alignItems: "stretch",
   },
   title: {
     fontSize: 35,

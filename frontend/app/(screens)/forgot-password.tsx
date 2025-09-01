@@ -1,8 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Keyboard,
+  Modal,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { changePassword } from "../../api";
+import { ButtonStyles } from "../../styles/buttons";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -11,135 +22,147 @@ export default function ForgotPassword() {
   const [new_password, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isFormValid = email.trim() && old_password.trim() && new_password.trim();
+  // For custom alert
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const showAlert = (message: string) => {
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
+  const isFormValid =
+    email.trim() !== "" && old_password.trim() !== "" && new_password.trim() !== "";
 
   const handleReset = async () => {
     if (!isFormValid) {
-      Alert.alert("Error", "Please fill in all fields");
+      showAlert("Please fill in all fields");
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert("Error", "Please enter a valid email address.");
+      showAlert("Please enter a valid email address.");
       return;
     }
 
     // Password length validation
     if (new_password.length < 6) {
-      Alert.alert("Error", "New password must be at least 6 characters long.");
+      showAlert("New password must be at least 6 characters long.");
       return;
     }
 
     // Check if new password is different from old password
     if (old_password === new_password) {
-      Alert.alert("Error", "New password must be different from current password.");
+      showAlert("New password must be different from current password.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await changePassword(email, old_password, new_password);
-      
-      Alert.alert(
-        "Success", 
-        "Password changed successfully!", 
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Clear form
-              setEmail("");
-              setOldPassword("");
-              setNewPassword("");
-              // Go to login screen
-              router.push("/login");
-            }
-          }
-        ]
-      );
+      await changePassword(email, old_password, new_password);
+
+      showAlert("Password changed successfully!");
+      // Clear and redirect on close
+      setEmail("");
+      setOldPassword("");
+      setNewPassword("");
+      setTimeout(() => router.push("/login"), 500);
     } catch (error: any) {
-      Alert.alert("Password Change Failed", error);
+      showAlert(error?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={styles.container}>
-        {/* Back Button */}
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-          disabled={loading}
-        >
-          <Ionicons name="chevron-back" size={28} color="#800080" />
-        </TouchableOpacity>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+        <View style={styles.container}>
+          {/* Back Button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            disabled={loading}
+          >
+            <Ionicons name="chevron-back" size={28} color="#800080" />
+          </TouchableOpacity>
 
-        {/* Title */}
-        <Text style={styles.title}>Change Password</Text>
+          {/* Title */}
+          <Text style={styles.title}>Change Password</Text>
 
-        {/* Instructions */}
-        <Text style={styles.instructions}>
-          Enter your email and current password to set a new password.
-        </Text>
-
-        {/* Inputs */}
-        <TextInput
-          style={styles.input}
-          placeholder="Email Address"
-          placeholderTextColor="#aaa"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-          editable={!loading}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Current Password"
-          placeholderTextColor="#aaa"
-          secureTextEntry
-          value={old_password}
-          onChangeText={setOldPassword}
-          editable={!loading}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="New Password (min 6 characters)"
-          placeholderTextColor="#aaa"
-          secureTextEntry
-          value={new_password}
-          onChangeText={setNewPassword}
-          editable={!loading}
-        />
-
-        {/* Reset Password Button */}
-        <TouchableOpacity 
-          style={[
-            styles.resetPasswordButton, 
-            { backgroundColor: (isFormValid && !loading) ? "#800080" : "#ccc" }
-          ]} 
-          onPress={handleReset} 
-          disabled={!isFormValid || loading}
-        >
-          <Text style={styles.resetPasswordText}>
-            {loading ? "Changing..." : "Change Password"}
+          {/* Instructions */}
+          <Text style={styles.instructions}>
+            Enter your email and current password to set a new password.
           </Text>
-        </TouchableOpacity>
 
-        {/* Back to Login Link */}
-        <TouchableOpacity 
-          style={styles.loginLink} 
-          onPress={() => router.push("/welcome")}
-          disabled={loading}
-        >
-        </TouchableOpacity>
+          {/* Inputs */}
+          <TextInput
+            style={styles.input}
+            placeholder="Email Address"
+            placeholderTextColor="#aaa"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            editable={!loading}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Current Password"
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            value={old_password}
+            onChangeText={setOldPassword}
+            editable={!loading}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="New Password (min 6 characters)"
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            value={new_password}
+            onChangeText={setNewPassword}
+            editable={!loading}
+          />
+
+          {/* Reset Password Button */}
+          <TouchableOpacity
+            style={[
+              styles.resetPasswordButton,
+              { backgroundColor: isFormValid && !loading ? "#800080" : "#ccc" },
+            ]}
+            onPress={handleReset}
+            disabled={!isFormValid || loading}
+          >
+            <Text style={styles.resetPasswordText}>
+              {loading ? "Changing..." : "Change Password"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Custom Alert Modal */}
+<Modal transparent visible={alertVisible} animationType="fade">
+  <View style={ButtonStyles.alertOverlay}>
+    <View style={ButtonStyles.alertBox}>
+      <View style={ButtonStyles.alertIcon}>
+        <Ionicons name="alert-circle" size={50} color="#ff4444" />
       </View>
-    </SafeAreaView>
+      <Text style={ButtonStyles.alertMessage}>{alertMessage}</Text>
+      <TouchableOpacity
+        style={ButtonStyles.alertButton}
+        onPress={() => setAlertVisible(false)}
+      >
+        <Text style={ButtonStyles.alertButtonText}>OK</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
+        </View>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -166,7 +189,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: "absolute",
-    top: 50, 
+    top: 50,
     left: 20,
     backgroundColor: "white",
     borderRadius: 20,
@@ -205,14 +228,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  loginLink: {
-    alignSelf: "center",
-    marginTop: 10,
-  },
-  loginLinkText: {
-    color: "#800080",
-    fontSize: 14,
-    textDecorationLine: "underline",
   },
 });
