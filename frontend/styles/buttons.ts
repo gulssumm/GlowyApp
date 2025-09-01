@@ -64,7 +64,7 @@ export const ButtonStyles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
     marginBottom: 2,
-    lineHeight: 22,
+    lineHeight: 15,
     paddingHorizontal: 25,
   },
   alertButton: {

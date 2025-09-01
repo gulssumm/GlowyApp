@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   Animated,
   FlatList,
   Image,
@@ -12,14 +11,111 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { addToCart as apiAddToCart, logoutUser as apiLogoutUser, getAllJewelries, getCart } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-
+import { ButtonStyles } from "../../styles/buttons"; // Import the button styles
 
 interface Jewellery { id: number; name: string; description: string; price: number; imageUrl: string; }
 interface MenuItem { id: string; title: string; icon: string; action: () => void; color?: string; dividerAfter?: boolean; }
+
+// Custom Alert Component
+interface CustomAlertProps {
+  visible: boolean;
+  title: string;
+  message: string;
+  buttons: Array<{
+    text: string;
+    onPress: () => void;
+    style?: 'default' | 'cancel' | 'destructive';
+  }>;
+  onClose: () => void;
+  icon?: string;
+}
+
+const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, buttons, onClose, icon }) => {
+  if (!visible) return null;
+
+  const getButtonStyle = (style?: string) => {
+    switch (style) {
+      case 'destructive':
+        return ButtonStyles.warning;
+      case 'cancel':
+        return ButtonStyles.secondary;
+      default:
+        return ButtonStyles.primary;
+    }
+  };
+
+  const getButtonTextStyle = (style?: string) => {
+    switch (style) {
+      case 'cancel':
+        return { ...ButtonStyles.text, color: '#333' };
+      default:
+        return ButtonStyles.text;
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={ButtonStyles.alertOverlay}>
+        <View style={ButtonStyles.alertBox}>
+          {icon && (
+            <Ionicons 
+              name={icon as any} 
+              size={50} 
+              color="#800080" 
+              style={ButtonStyles.alertIcon}
+            />
+          )}
+          <Text style={[ButtonStyles.alertMessage, { fontWeight: 'bold', fontSize: 18, marginBottom: 10 }]}>
+            {title}
+          </Text>
+          <Text style={ButtonStyles.alertMessage}>
+            {message}
+          </Text>
+          
+          {buttons.length === 1 ? (
+            <TouchableOpacity 
+              style={ButtonStyles.alertButton} 
+              onPress={() => {
+                buttons[0].onPress();
+                onClose();
+              }}
+            >
+              <Text style={ButtonStyles.alertButtonText}>{buttons[0].text}</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.alertButtonContainer}>
+              {buttons.map((button, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    getButtonStyle(button.style),
+                    {
+                      flex: 1,
+                      marginHorizontal: 8,
+                      marginTop: 1,
+                    }
+                  ]}
+                  onPress={() => {
+                    button.onPress();
+                    onClose();
+                  }}
+                >
+                  <Text style={getButtonTextStyle(button.style)}>
+                    {button.text}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 export default function MainScreen() {
   const router = useRouter();
@@ -28,63 +124,100 @@ export default function MainScreen() {
   const [jewelries, setJewelries] = useState<Jewellery[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [slideAnim] = useState(new Animated.Value(-300));
-  const [addingToCart, setAddingToCart] = useState<number | null>(null); // Track which item is being added
+  const [addingToCart, setAddingToCart] = useState<number | null>(null);
+  
+  // Custom Alert State
+  const [customAlert, setCustomAlert] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    buttons: Array<{
+      text: string;
+      onPress: () => void;
+      style?: 'default' | 'cancel' | 'destructive';
+    }>;
+    icon?: string;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    buttons: [],
+  });
 
+  // Custom Alert Helper Function
+  const showCustomAlert = (
+    title: string, 
+    message: string, 
+    buttons: Array<{
+      text: string;
+      onPress: () => void;
+      style?: 'default' | 'cancel' | 'destructive';
+    }>,
+    icon?: string
+  ) => {
+    setCustomAlert({
+      visible: true,
+      title,
+      message,
+      buttons,
+      icon,
+    });
+  };
 
-// Fetch cart count when component mounts and when user logs in
-const fetchCartCount = async () => {
-  if (!isLoggedIn) {
-    setCartCount(0);
-    return;
-  }
+  const hideCustomAlert = () => {
+    setCustomAlert(prev => ({ ...prev, visible: false }));
+  };
 
-  try {
-    const cartData = await getCart();
-    setCartCount(cartData?.totalItems || 0);
-  } catch (error) {
-    console.error("Failed to fetch cart count:", error);
-    // Don't show error to user, just keep count at 0
-  }
-};
+  // Fetch cart count when component mounts and when user logs in
+  const fetchCartCount = async () => {
+    if (!isLoggedIn) {
+      setCartCount(0);
+      return;
+    }
 
-useEffect(() => {
-  fetchCartCount();
-}, [isLoggedIn]); // Re-fetch when login state changes
-
-
-useEffect(() => {
-  const fetchJewelries = async () => {
     try {
-      console.log('Starting to fetch jewelries...');
-      const data = await getAllJewelries();
-      console.log('Fetched jewelries data:', data);
-      console.log('Number of items:', data?.length || 0);
-      
-      if (data && Array.isArray(data)) {
-        setJewelries(data);
-        console.log('Successfully set jewelries state');
-      } else {
-        console.log('Data is not an array:', typeof data, data);
-      }
+      const cartData = await getCart();
+      setCartCount(cartData?.totalItems || 0);
     } catch (error) {
-      console.error("Failed to fetch jewelries:", error);
-      // Show user-friendly error message
-      Alert.alert(
-        "Network Error", 
-        "Unable to load products. Please check your connection and try again.",
-        [{ text: "OK" }]
-      );
+      console.error("Failed to fetch cart count:", error);
     }
   };
 
-  fetchJewelries();
-}, []);
+  useEffect(() => {
+    fetchCartCount();
+  }, [isLoggedIn]);
 
-// Add this temporary debug render to see what's in your state
-console.log('Current jewelries state:', jewelries);
-console.log('Jewelries length:', jewelries.length);
-console.log('Current cart count:', cartCount);
-  
+  useEffect(() => {
+    const fetchJewelries = async () => {
+      try {
+        console.log('Starting to fetch jewelries...');
+        const data = await getAllJewelries();
+        console.log('Fetched jewelries data:', data);
+        console.log('Number of items:', data?.length || 0);
+        
+        if (data && Array.isArray(data)) {
+          setJewelries(data);
+          console.log('Successfully set jewelries state');
+        } else {
+          console.log('Data is not an array:', typeof data, data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch jewelries:", error);
+        showCustomAlert(
+          "Network Error",
+          "Unable to load products. Please check your connection and try again.",
+          [{ text: "OK", onPress: () => {} }],
+          "warning-outline"
+        );
+      }
+    };
+
+    fetchJewelries();
+  }, []);
+
+  console.log('Current jewelries state:', jewelries);
+  console.log('Jewelries length:', jewelries.length);
+  console.log('Current cart count:', cartCount);
 
   const toggleMenu = () => {
     if (menuVisible) {
@@ -96,44 +229,64 @@ console.log('Current cart count:', cartCount);
   };
 
   if (loading) {
-  return (
-    <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Loading...</Text>
-    </SafeAreaView>
-  );
-}
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
 
-const handleNavigation = (route: string) => {
-  router.push(route); // navigate immediately
-  setMenuVisible(false); // close menu after navigation
-};
+  const handleNavigation = (route: string) => {
+    router.push(route);
+    setMenuVisible(false);
+  };
 
-const handleComingSoon = (feature: string) => {
-  Alert.alert("Coming Soon", `${feature} feature will be available soon!`);
-  setMenuVisible(false);
-};
+  const handleComingSoon = (feature: string) => {
+    showCustomAlert(
+      "Coming Soon",
+      `${feature} feature will be available soon!`,
+      [{ text: "OK", onPress: () => {} }],
+      "time-outline"
+    );
+    setMenuVisible(false);
+  };
 
-const handleLogout = () => {
-  Alert.alert("Logout", "Are you sure you want to logout?", [
-    { text: "Cancel", style: "cancel" },
-    {
-      text: "Logout",
-      style: "destructive",
-      onPress: async () => {
-        try {
-          await apiLogoutUser();
-          logout();
-          setMenuVisible(false);
-          setCartCount(0);  // Reset cart count on logout
-          Alert.alert("Success", "Logged out successfully!");
-        } catch (error) {
-          console.error("Logout error:", error);
-          Alert.alert("Error", "Failed to logout");
-        }
-      },
-    },
-  ]);
-};
+  const handleLogout = () => {
+    showCustomAlert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", onPress: () => {}, style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await apiLogoutUser();
+              logout();
+              setMenuVisible(false);
+              setCartCount(0);
+              showCustomAlert(
+                "Success",
+                "Logged out successfully!",
+                [{ text: "OK", onPress: () => {} }],
+                "checkmark-circle-outline"
+              );
+            } catch (error) {
+              console.error("Logout error:", error);
+              showCustomAlert(
+                "Error",
+                "Failed to logout",
+                [{ text: "OK", onPress: () => {} }],
+                "warning-outline"
+              );
+            }
+          },
+        },
+      ],
+      "log-out-outline"
+    );
+  };
 
   const getMenuItems = (): MenuItem[] => {
     const commonItems: MenuItem[] = [
@@ -162,63 +315,69 @@ const handleLogout = () => {
   };
 
   const menuItems = useMemo(() => getMenuItems(), [currentUser]);
-  // Bottom navigation buttons
+
   const getBottomNavButtons = () => {
     return [
       {
         id: 'home',
         icon: 'home',
         action: () => handleNavigation('/main'),
-        isActive: true // Current screen
+        isActive: true
       },
       {
         id: 'favorites',
         icon: 'heart',
-        action: () => isLoggedIn ? handleComingSoon('Favorites') : Alert.alert(
-        "Login Required", 
-        "Please log in to see your favorites.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => router.push('/login') }
-        ])
+        action: () => isLoggedIn ? handleComingSoon('Favorites') : showCustomAlert(
+          "Login Required",
+          "Please log in to see your favorites.",
+          [
+            { text: "Cancel", onPress: () => {}, style: "cancel" },
+            { text: "Login", onPress: () => router.push('/login') }
+          ],
+          "heart-outline"
+        )
       },
       {
         id: 'orders',
         icon: 'bag',
-        action: () => isLoggedIn ? handleNavigation('/myorders') : Alert.alert(
-        "Login Required", 
-        "Please log in to see your orders.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => router.push('/login') }
-        ])
+        action: () => isLoggedIn ? handleNavigation('/myorders') : showCustomAlert(
+          "Login Required",
+          "Please log in to see your orders.",
+          [
+            { text: "Cancel", onPress: () => {}, style: "cancel" },
+            { text: "Login", onPress: () => router.push('/login') }
+          ],
+          "bag-outline"
+        )
       },
       {
         id: 'profile',
         icon: 'person',
-        action: () => isLoggedIn ? handleNavigation('/profile') : Alert.alert(
-        "Login Required", 
-        "Please log in to see your profile.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Login", onPress: () => router.push('/login') }
-        ])
+        action: () => isLoggedIn ? handleNavigation('/profile') : showCustomAlert(
+          "Login Required",
+          "Please log in to see your profile.",
+          [
+            { text: "Cancel", onPress: () => {}, style: "cancel" },
+            { text: "Login", onPress: () => router.push('/login') }
+          ],
+          "person-outline"
+        )
       },
     ];
   };
-
 
   // Add to cart function
   const addToCart = async (item: Jewellery) => {
     // 1. Check if user is logged in
     if (!isLoggedIn) {
-      Alert.alert(
-        "Login Required", 
+      showCustomAlert(
+        "Login Required",
         "Please log in to add items to your cart.",
         [
-          { text: "Cancel", style: "cancel" },
+          { text: "Cancel", onPress: () => {}, style: "cancel" },
           { text: "Login", onPress: () => router.push('/login') }
-        ]
+        ],
+        "bag-add-outline"
       );
       return;
     }
@@ -234,25 +393,32 @@ const handleLogout = () => {
       setCartCount(prev => prev + 1);
       
       // 4. Show success message with option to view
-      Alert.alert(
-        "Added to Cart", 
+      showCustomAlert(
+        "Added to Cart",
         `${item.name} has been added to your cart!`,
         [
-          { text: "Continue Shopping", style: "default" },
+          { text: "Continue Shopping", onPress: () => {}, style: "cancel" },
           { text: "View Cart", onPress: () => router.push('/cart') }
-        ]
+        ],
+        "checkmark-circle-outline"
       );
     } catch (error: any) {
       console.error("Failed to add to cart:", error);
       
       // Handle specific error cases
       if (error.response?.status === 401) {
-        Alert.alert("Session Expired", "Please log in again.");
-        router.push('/login');
+        showCustomAlert(
+          "Session Expired",
+          "Please log in again.",
+          [{ text: "OK", onPress: () => router.push('/login') }],
+          "warning-outline"
+        );
       } else {
-        Alert.alert(
-          "Error", 
-          error.response?.data?.message || "Failed to add item to cart. Please try again."
+        showCustomAlert(
+          "Error",
+          error.response?.data?.message || "Failed to add item to cart. Please try again.",
+          [{ text: "OK", onPress: () => {} }],
+          "warning-outline"
         );
       }
     } finally {
@@ -268,9 +434,22 @@ const handleLogout = () => {
         <Text style={styles.productName}>{item.name}</Text>
         <Text style={styles.productDescription}>{item.description}</Text>
         <Text style={styles.productPrice}>${item.price.toLocaleString()}</Text>
-        <TouchableOpacity style={styles.addToCartButton} onPress={() => addToCart(item)}>
-          <Ionicons name="bag-add" size={20} color="#fff" />
-          <Text style={styles.addToCartText}>Add to Cart</Text>
+        <TouchableOpacity 
+          style={[
+            styles.addToCartButton, 
+            addingToCart === item.id && { opacity: 0.7 }
+          ]} 
+          onPress={() => addToCart(item)}
+          disabled={addingToCart === item.id}
+        >
+          <Ionicons 
+            name={addingToCart === item.id ? "time-outline" : "bag-add"} 
+            size={20} 
+            color="#fff" 
+          />
+          <Text style={styles.addToCartText}>
+            {addingToCart === item.id ? "Adding..." : "Add to Cart"}
+          </Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -285,7 +464,8 @@ const handleLogout = () => {
       {item.dividerAfter && <View style={styles.menuDivider} />}
     </View>
   );
-    const renderBottomNavButton = (button: any) => (
+
+  const renderBottomNavButton = (button: any) => (
     <TouchableOpacity
       key={button.id}
       style={styles.bottomNavButton}
@@ -317,7 +497,6 @@ const handleLogout = () => {
         </TouchableOpacity>
       </View>
 
-      
       {/* Content with bottom padding to avoid overlap with bottom nav */}
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
@@ -390,6 +569,16 @@ const handleLogout = () => {
           </Animated.View>
         </View>
       </Modal>
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={customAlert.visible}
+        title={customAlert.title}
+        message={customAlert.message}
+        buttons={customAlert.buttons}
+        onClose={hideCustomAlert}
+        icon={customAlert.icon}
+      />
     </SafeAreaView>
   );
 }
@@ -441,7 +630,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingBottom: 100, // Space for bottom navigation
+    paddingBottom: 100,
   },
   heroSection: {
     padding: 20,
@@ -557,6 +746,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
     marginLeft: 4,
+  },
+  // Alert Button Container for multiple buttons
+  alertButtonContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 1,
+    justifyContent: 'space-between',
+    paddingBottom: 15,
   },
   // Bottom Navigation Styles
   bottomNavContainer: {
