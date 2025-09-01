@@ -428,7 +428,7 @@ export default function MainScreen() {
   };
 
   const renderJewelryCard = ({ item }: { item: Jewellery }) => (
-    <TouchableOpacity style={styles.productCard}>
+    <TouchableOpacity style={styles.productCard} onPress={() => router.push('/product-detail')}>
       <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>

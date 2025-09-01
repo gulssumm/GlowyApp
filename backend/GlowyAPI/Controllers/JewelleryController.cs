@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using GlowyAPI.Data;
 using GlowyAPI.Models;
+using GlowyAPI.Helpers;
 
 namespace GlowyAPI.Controllers
 {
@@ -14,16 +15,6 @@ namespace GlowyAPI.Controllers
         public JewelleryController(AppDbContext context)
         {
             _context = context;
-        }
-
-        private string ProcessImageUrl(string imageUrl)
-        {
-            // If it's already a full URL, return as is
-            if (imageUrl.StartsWith("http://") || imageUrl.StartsWith("https://"))
-                return imageUrl;
-
-            // If it's just a filename, create full local URL
-            return $"{Request.Scheme}://{Request.Host}/images/jewelry/{imageUrl}";
         }
 
         // GET: api/jewellery
@@ -39,7 +30,7 @@ namespace GlowyAPI.Controllers
                 foreach (var item in items)
                 {
                     var originalUrl = item.ImageUrl;
-                    item.ImageUrl = ProcessImageUrl(item.ImageUrl);
+                    item.ImageUrl = ImageUrlHelper.ProcessImageUrl(item.ImageUrl, Request);
                     Console.WriteLine($"Item {item.Id}: {originalUrl} -> {item.ImageUrl}");
                 }
 
@@ -59,7 +50,7 @@ namespace GlowyAPI.Controllers
             var item = await _context.Jewelleries.FindAsync(id);
             if (item == null) return NotFound();
 
-            item.ImageUrl = ProcessImageUrl(item.ImageUrl);
+            item.ImageUrl = ImageUrlHelper.ProcessImageUrl(item.ImageUrl, Request);
             return Ok(item);
         }
 
@@ -76,7 +67,7 @@ namespace GlowyAPI.Controllers
             _context.Jewelleries.Add(jewellery);
             await _context.SaveChangesAsync();
 
-            jewellery.ImageUrl = ProcessImageUrl(jewellery.ImageUrl);
+            jewellery.ImageUrl = ImageUrlHelper.ProcessImageUrl(jewellery.ImageUrl, Request);
             return CreatedAtAction(nameof(GetById), new { id = jewellery.Id }, jewellery);
         }
 
@@ -157,7 +148,7 @@ namespace GlowyAPI.Controllers
             // Return with processed URLs
             foreach (var jewellery in jewelleries)
             {
-                jewellery.ImageUrl = ProcessImageUrl(jewellery.ImageUrl);
+                jewellery.ImageUrl = ImageUrlHelper.ProcessImageUrl(jewellery.ImageUrl, Request);
             }
 
             return Ok(new { Count = jewelleries.Count, Message = "Jewelleries added successfully", Data = jewelleries });
@@ -170,13 +161,12 @@ namespace GlowyAPI.Controllers
             var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             var imagesPath = Path.Combine(wwwrootPath, "images", "jewelry");
 
-            // Always return the same type structure
             var filesList = new List<object>();
             if (Directory.Exists(imagesPath))
             {
                 filesList = Directory.GetFiles(imagesPath).Select(f => new {
                     FileName = Path.GetFileName(f),
-                    FullUrl = $"{Request.Scheme}://{Request.Host}/images/jewelry/{Path.GetFileName(f)}"
+                    FullUrl = ImageUrlHelper.ProcessImageUrl(Path.GetFileName(f), Request)
                 }).Cast<object>().ToList();
             }
 

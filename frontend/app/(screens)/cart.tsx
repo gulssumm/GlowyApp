@@ -171,77 +171,66 @@ export default function CartScreen() {
   };
 
 const renderCartItem = ({ item }: { item: CartItem }) => {
-  // Construct full image URL if it's just a filename
-  const getImageUrl = (imageUrl: string) => {
-    if (imageUrl.startsWith('http')) {
-      return imageUrl; // Already a full URL
-    }
-    const baseUrl = process.env.API_URL?.replace('/api', '');
-    const fullUrl = `${baseUrl}/images/jewelry/${imageUrl}`;
-    console.log('Constructed image URL:', fullUrl);
-    return fullUrl;
-  };
-
-  const imageUrl = getImageUrl(item.imageUrl);
+  const imageUrl = item.imageUrl;
   const name = item.name;
   const description = item.description;
   const price = item.price;
     
-    console.log(`Rendering item: ${name}, Image URL: ${imageUrl}`);
+  console.log(`Rendering item: ${name}, Image URL: ${imageUrl}`);
     
-    return (
-      <View style={styles.cartItemContainer}>
-        <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={styles.itemImage}
-            onError={(e) => {
-              console.log(`Image failed to load for ${name}:`, e.nativeEvent.error);
-              console.log(`Failed URL: ${imageUrl}`);
-            }}
-            onLoad={() => {
-              console.log(`Image loaded successfully for ${name}`);
-            }}
-          />
-        </View>
-        <View style={styles.itemDetails}>
-          <Text style={styles.itemName}>{name}</Text>
-          <Text style={styles.itemDescription}>{description}</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.itemPrice}>${price.toLocaleString()}</Text>
-          </View>
-        </View>
-        <View style={styles.quantityControls}>
-          <View style={styles.quantityRow}>
-            <TouchableOpacity
-              style={[styles.quantityButton, item.quantity <= 1 && styles.quantityButtonDisabled]}
-              onPress={() => updateQuantity(item.id, -1, item.quantity)}
-              disabled={item.quantity <= 1}
-            >
-              <Ionicons
-                name="remove"
-                size={16}
-                color={item.quantity <= 1 ? "#ccc" : "#800080"}
-              />
-            </TouchableOpacity>
-            <Text style={styles.quantityText}>{item.quantity}</Text>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => updateQuantity(item.id, 1, item.quantity)}
-            >
-              <Ionicons name="add" size={16} color="#800080" />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={() => removeItem(item.id, name)}
-          >
-            <Ionicons name="trash-outline" size={18} color="#ff4444" />
-          </TouchableOpacity>
+  return (
+    <TouchableOpacity style={styles.cartItemContainer} onPress={() => router.push('/product-detail')}>
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: imageUrl }} 
+          style={styles.itemImage}
+          onError={(e) => {
+            console.log(`Image failed to load for ${name}:`, e.nativeEvent.error);
+            console.log(`Failed URL: ${imageUrl}`);
+          }}
+          onLoad={() => {
+            console.log(`Image loaded successfully for ${name}`);
+          }}
+        />
+      </View>
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName}>{name}</Text>
+        <Text style={styles.itemDescription}>{description}</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.itemPrice}>${price.toLocaleString()}</Text>
         </View>
       </View>
-    );
-  };
+      <View style={styles.quantityControls}>
+        <View style={styles.quantityRow}>
+          <TouchableOpacity
+            style={[styles.quantityButton, item.quantity <= 1 && styles.quantityButtonDisabled]}
+            onPress={() => updateQuantity(item.id, -1, item.quantity)}
+            disabled={item.quantity <= 1}
+          >
+            <Ionicons
+              name="remove"
+              size={16}
+              color={item.quantity <= 1 ? "#ccc" : "#800080"}
+            />
+          </TouchableOpacity>
+          <Text style={styles.quantityText}>{item.quantity}</Text>
+          <TouchableOpacity
+            style={styles.quantityButton}
+            onPress={() => updateQuantity(item.id, 1, item.quantity)}
+          >
+            <Ionicons name="add" size={16} color="#800080" />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => removeItem(item.id, name)}
+        >
+          <Ionicons name="trash-outline" size={18} color="#ff4444" />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
