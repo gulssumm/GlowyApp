@@ -4,6 +4,7 @@ using GlowyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using GlowyAPI.Helpers; // Add this
 
 namespace GlowyAPI.Controllers
 {
@@ -94,7 +95,7 @@ namespace GlowyAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Return order details
+                // Return order details with processed image URLs
                 var orderResponse = new
                 {
                     Id = order.Id,
@@ -161,7 +162,7 @@ namespace GlowyAPI.Controllers
                         Id = oi.Id,
                         JewelleryId = oi.JewelleryId,
                         Name = oi.Jewellery.Name,
-                        ImageUrl = oi.Jewellery.ImageUrl,
+                        ImageUrl = ImageUrlHelper.ProcessImageUrl(oi.Jewellery.ImageUrl, Request), // Fix: Process image URL
                         Quantity = oi.Quantity,
                         Price = oi.Price
                     }).ToList()
@@ -213,7 +214,8 @@ namespace GlowyAPI.Controllers
                         Id = oi.Id,
                         JewelleryId = oi.JewelleryId,
                         Name = oi.Jewellery.Name,
-                        ImageUrl = oi.Jewellery.ImageUrl,
+                        Description = oi.Jewellery.Description, // Add description
+                        ImageUrl = ImageUrlHelper.ProcessImageUrl(oi.Jewellery.ImageUrl, Request), // Fix: Process image URL
                         Quantity = oi.Quantity,
                         Price = oi.Price
                     }).ToList()
@@ -231,7 +233,7 @@ namespace GlowyAPI.Controllers
         public class CreateOrderRequest
         {
             public int AddressId { get; set; }
-            public string PaymentMethod { get; set; } = string.Empty; // "CreditCard", "PayPal", "BankTransfer"
+            public string PaymentMethod { get; set; } = string.Empty;
         }
     }
 }

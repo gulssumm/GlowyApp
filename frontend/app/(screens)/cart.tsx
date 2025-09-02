@@ -179,7 +179,10 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
   console.log(`Rendering item: ${name}, Image URL: ${imageUrl}`);
     
   return (
-    <TouchableOpacity style={styles.cartItemContainer} onPress={() => router.push('/product-detail')}>
+    <TouchableOpacity 
+      style={styles.cartItemContainer} 
+      onPress={() => router.push(`/product-detail?id=${item.jewelleryId}`)} 
+    >
       <View style={styles.imageContainer}>
         <Image 
           source={{ uri: imageUrl }} 

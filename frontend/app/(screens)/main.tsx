@@ -428,7 +428,7 @@ export default function MainScreen() {
   };
 
   const renderJewelryCard = ({ item }: { item: Jewellery }) => (
-    <TouchableOpacity style={styles.productCard} onPress={() => router.push('/product-detail')}>
+    <TouchableOpacity style={styles.productCard} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
       <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
@@ -439,7 +439,10 @@ export default function MainScreen() {
             styles.addToCartButton, 
             addingToCart === item.id && { opacity: 0.7 }
           ]} 
-          onPress={() => addToCart(item)}
+          onPress={(e) => {
+            e.stopPropagation(); // Prevent navigation when clicking add to cart
+            addToCart(item);
+          }}
           disabled={addingToCart === item.id}
         >
           <Ionicons 

@@ -2,17 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { addToCart as apiAddToCart, getAllJewelries } from "../../api";
+import { addToCart as apiAddToCart, getAllJewelries, getCart } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { ButtonStyles } from "../../styles/buttons";
 
@@ -26,7 +26,7 @@ interface Jewellery {
   imageUrl: string;
 }
 
-// Custom Alert Component (same as in main.tsx)
+// Custom Alert Component
 interface CustomAlertProps {
   visible: boolean;
   title: string;
@@ -130,6 +130,7 @@ export default function ProductDetailScreen() {
   const [product, setProduct] = useState<Jewellery | null>(null);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   
   // Custom Alert State
   const [customAlert, setCustomAlert] = useState<{
@@ -173,8 +174,32 @@ export default function ProductDetailScreen() {
     setCustomAlert(prev => ({ ...prev, visible: false }));
   };
 
+  // Fetch cart count
+  const fetchCartCount = async () => {
+    if (!isLoggedIn) {
+      setCartCount(0);
+      return;
+    }
+
+    try {
+      const cartData = await getCart();
+      setCartCount(cartData?.totalItems || 0);
+    } catch (error) {
+      console.error("Failed to fetch cart count:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCartCount();
+  }, [isLoggedIn]);
+
   useEffect(() => {
     const fetchProduct = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const jewelries = await getAllJewelries();
         const foundProduct = jewelries.find((item: Jewellery) => item.id === parseInt(id as string));
@@ -202,9 +227,7 @@ export default function ProductDetailScreen() {
       }
     };
 
-    if (id) {
-      fetchProduct();
-    }
+    fetchProduct();
   }, [id]);
 
   const handleAddToCart = async () => {
@@ -227,6 +250,7 @@ export default function ProductDetailScreen() {
 
     try {
       await apiAddToCart(product.id, 1);
+      setCartCount(prev => prev + 1);
       
       showCustomAlert(
         "Added to Cart",
@@ -303,6 +327,11 @@ export default function ProductDetailScreen() {
         <Text style={styles.headerTitle}>Product Details</Text>
         <TouchableOpacity onPress={() => router.push('/cart')} style={styles.cartButton}>
           <Ionicons name="bag-outline" size={28} color="#800080" />
+          {cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -325,38 +354,11 @@ export default function ProductDetailScreen() {
           
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.productDescription}>{product.description}</Text>
-          
-          <View style={styles.divider} />
-          
-          {/* Features Section */}
-          <Text style={styles.sectionTitle}>Features</Text>
-          <View style={styles.featuresContainer}>
-            <View style={styles.featureItem}>
-              <Ionicons name="diamond-outline" size={20} color="#800080" />
-              <Text style={styles.featureText}>Premium Quality</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="shield-checkmark-outline" size={20} color="#800080" />
-              <Text style={styles.featureText}>Authentic Materials</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="refresh-outline" size={20} color="#800080" />
-              <Text style={styles.featureText}>30-Day Return Policy</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="car-outline" size={20} color="#800080" />
-              <Text style={styles.featureText}>Free Shipping</Text>
-            </View>
-          </View>
         </View>
       </ScrollView>
 
       {/* Fixed Bottom Add to Cart Button */}
       <View style={styles.bottomContainer}>
-        <View style={styles.priceSection}>
-          <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalPrice}>${product.price.toLocaleString()}</Text>
-        </View>
         <TouchableOpacity 
           style={[styles.addToCartButton, addingToCart && { opacity: 0.7 }]}
           onPress={handleAddToCart}
@@ -368,7 +370,7 @@ export default function ProductDetailScreen() {
             color="#fff" 
           />
           <Text style={styles.addToCartText}>
-            {addingToCart ? "Adding..." : "Add to Cart"}
+            {addingToCart ? "Adding..." : `Add to Cart - $${product.price.toLocaleString()}`}
           </Text>
         </TouchableOpacity>
       </View>
@@ -411,14 +413,31 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   cartButton: {
+    position: "relative",
     padding: 5,
+  },
+  cartBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#ff4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   content: {
     flex: 1,
   },
   imageContainer: {
     width: screenWidth,
-    height: screenWidth,
+    height: screenWidth * 0.8,
     backgroundColor: "#f8f8f8",
   },
   productImage: {
@@ -427,7 +446,7 @@ const styles = StyleSheet.create({
   },
   productInfo: {
     padding: 20,
-    paddingBottom: 120, // Space for bottom button
+    paddingBottom: 100, // Space for bottom button
   },
   productName: {
     fontSize: 28,
@@ -459,20 +478,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 10,
   },
-  featuresContainer: {
-    marginTop: 10,
-  },
-  featureItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  featureText: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 12,
-    fontWeight: "500",
-  },
   bottomContainer: {
     position: "absolute",
     bottom: 0,
@@ -490,22 +495,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 10,
-  },
-  priceSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  totalLabel: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-  },
-  totalPrice: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#800080",
   },
   addToCartButton: {
     backgroundColor: "#800080",
