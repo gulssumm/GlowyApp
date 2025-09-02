@@ -4,7 +4,7 @@ using GlowyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using GlowyAPI.Helpers; // Add this
+using GlowyAPI.Helpers;
 
 namespace GlowyAPI.Controllers
 {
@@ -162,7 +162,7 @@ namespace GlowyAPI.Controllers
                         Id = oi.Id,
                         JewelleryId = oi.JewelleryId,
                         Name = oi.Jewellery.Name,
-                        ImageUrl = ImageUrlHelper.ProcessImageUrl(oi.Jewellery.ImageUrl, Request), // Fix: Process image URL
+                        ImageUrl = ImageUrlHelper.ProcessImageUrl(oi.Jewellery.ImageUrl, Request), 
                         Quantity = oi.Quantity,
                         Price = oi.Price
                     }).ToList()
