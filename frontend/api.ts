@@ -1,14 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_URL = process.env.API_URL || 'https://15b8f72a96d7.ngrok-free.app/api';
+const API_URL = process.env.API_URL || 'https://5a97f692be2f.ngrok-free.app/api';
 
-console.log('Using API URL:', API_URL); // Add this for debugging
+console.log('Using API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
+
+// Helper function to get token
+const getToken = async (): Promise<string | null> => {
+  return await AsyncStorage.getItem('userToken');
+};
 
 // Attach token automatically
 api.interceptors.request.use(async (config) => {
@@ -420,5 +425,125 @@ export const getOrderById = async (orderId: number) => {
     console.error('Get order error:', err);
     console.error('Error response:', err.response?.data);
     throw err;
+  }
+};
+
+// ===== FAVORITE FUNCTIONS =====
+export const getFavorites = async () => {
+  try {
+    const token = await getToken();
+    const response = await fetch(`${API_URL}/favorites`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching favorites:', error);
+    throw error;
+  }
+};
+
+export const addToFavorites = async (jewelryId: number) => {
+  try {
+    const token = await getToken();
+    const response = await fetch(`${API_URL}/favorites/${jewelryId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 409) {
+        throw new Error('Item already in favorites');
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error adding to favorites:', error);
+    throw error;
+  }
+};
+
+export const removeFromFavorites = async (jewelryId: number) => {
+  try {
+    const token = await getToken();
+    const response = await fetch(`${API_URL}/favorites/${jewelryId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error removing from favorites:', error);
+    throw error;
+  }
+};
+
+export const getFavoriteStatus = async (jewelryId: number) => {
+  try {
+    const token = await getToken();
+    const response = await fetch(`${API_URL}/favorites/status/${jewelryId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.isFavorite;
+  } catch (error) {
+    console.error('Error checking favorite status:', error);
+    throw error;
+  }
+};
+
+export const getBatchFavoriteStatus = async (jewelryIds: number[]) => {
+  try {
+    const token = await getToken();
+    const response = await fetch(`${API_URL}/favorites/batch-status`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(jewelryIds),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error checking batch favorite status:', error);
+    throw error;
   }
 };

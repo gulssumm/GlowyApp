@@ -18,6 +18,7 @@ namespace GlowyAPI.Data
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Favorite> Favorites { get; set; }
 
         public static void SeedJewelries(AppDbContext context)
         {
@@ -218,7 +219,23 @@ namespace GlowyAPI.Data
                 .WithMany()
                 .HasForeignKey(oi => oi.JewelleryId)
                 .OnDelete(DeleteBehavior.Restrict);
-        
+
+            // Favorite configuration
+            modelBuilder.Entity<Favorite>()
+                .HasIndex(f => new { f.UserId, f.JewelleryId })
+                .IsUnique(); // Prevent duplicate favorites
+
+            modelBuilder.Entity<Favorite>()
+                .HasOne(f => f.User)
+                .WithMany(u => u.Favorites)
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Favorite>()
+                .HasOne(f => f.Jewellery)
+                .WithMany(j => j.Favorites)
+                .HasForeignKey(f => f.JewelleryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

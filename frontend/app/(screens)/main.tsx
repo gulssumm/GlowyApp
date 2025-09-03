@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { addToCart as apiAddToCart, logoutUser as apiLogoutUser, getAllJewelries, getCart } from "../../api";
+import { addToFavorites, addToCart as apiAddToCart, logoutUser as apiLogoutUser, getAllJewelries, getBatchFavoriteStatus, getCart, removeFromFavorites } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { ButtonStyles } from "../../styles/buttons"; // Import the button styles
 
@@ -32,6 +32,9 @@ interface CustomAlertProps {
   }>;
   onClose: () => void;
   icon?: string;
+}
+interface FavoriteStatus {
+  [key: number]: boolean;
 }
 
 const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, buttons, onClose, icon }) => {
@@ -125,6 +128,8 @@ export default function MainScreen() {
   const [cartCount, setCartCount] = useState(0);
   const [slideAnim] = useState(new Animated.Value(-300));
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
+  const [favoriteStatuses, setFavoriteStatuses] = useState<FavoriteStatus>({});
+  const [togglingFavorite, setTogglingFavorite] = useState<number | null>(null);
   
   // Custom Alert State
   const [customAlert, setCustomAlert] = useState<{
@@ -298,7 +303,7 @@ export default function MainScreen() {
     if (isLoggedIn) {
       return [
         ...commonItems,
-        { id: 'favorites', title: 'Favorites', icon: 'heart', action: () => handleComingSoon('Favorites') },
+        { id: 'favorites', title: 'Favorites', icon: 'heart', action: () => handleNavigation('/favorites') },
         { id: 'orders', title: 'My Orders', icon: 'bag', action: () => handleNavigation('/myorders'), dividerAfter: true },
         { id: 'profile', title: 'Profile', icon: 'person', action: () => handleNavigation('/profile') },
         { id: 'settings', title: 'Settings', icon: 'settings', action: () => handleComingSoon('Settings') },
@@ -327,7 +332,7 @@ export default function MainScreen() {
       {
         id: 'favorites',
         icon: 'heart',
-        action: () => isLoggedIn ? handleComingSoon('Favorites') : showCustomAlert(
+        action: () => isLoggedIn ? handleNavigation('/favorites') : showCustomAlert(
           "Login Required",
           "Please log in to see your favorites.",
           [
@@ -427,9 +432,32 @@ export default function MainScreen() {
     }
   };
 
-  const renderJewelryCard = ({ item }: { item: Jewellery }) => (
+  const renderJewelryCard = ({ item }: { item: Jewellery }) => {
+  const isFavorited = favoriteStatuses[item.id] || false;
+  const isTogglingThis = togglingFavorite === item.id;
+  
+  return (
     <TouchableOpacity style={styles.productCard} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
-      <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+        <TouchableOpacity 
+          style={[styles.favoriteButton, isTogglingThis && { opacity: 0.7 }]}
+          onPress={(e) => toggleFavorite(item, e)}
+          disabled={isTogglingThis}
+        >
+          <Ionicons 
+            name={
+              isTogglingThis 
+                ? "time-outline" 
+                : isFavorited 
+                  ? "heart" 
+                  : "heart-outline"
+            } 
+            size={20} 
+            color={isFavorited ? "#ff4444" : "#666"} 
+          />
+        </TouchableOpacity>
+      </View>
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
         <Text style={styles.productDescription}>{item.description}</Text>
@@ -457,6 +485,7 @@ export default function MainScreen() {
       </View>
     </TouchableOpacity>
   );
+};
 
   const renderMenuItem = (item: MenuItem) => (
     <View key={item.id}>
@@ -481,6 +510,91 @@ export default function MainScreen() {
       />
     </TouchableOpacity>
   );
+
+  // Fetch favorite statuses when jewelries or login state changes
+  const fetchFavoriteStatuses = async () => {
+  if (!isLoggedIn || jewelries.length === 0) {
+    setFavoriteStatuses({});
+    return;
+  }
+
+  try {
+    const jewelryIds = jewelries.map(item => item.id);
+    const statuses = await getBatchFavoriteStatus(jewelryIds);
+    setFavoriteStatuses(statuses);
+  } catch (error) {
+    console.error("Failed to fetch favorite statuses:", error);
+  }
+};
+useEffect(() => {
+  fetchFavoriteStatuses();
+}, [isLoggedIn, jewelries]);
+
+// Add this function to handle favorite toggle
+const toggleFavorite = async (item: Jewellery, event: any) => {
+  event.stopPropagation(); // Prevent navigation when clicking heart
+  
+  if (!isLoggedIn) {
+    showCustomAlert(
+      "Login Required",
+      "Please log in to add items to your favorites.",
+      [
+        { text: "Cancel", onPress: () => {}, style: "cancel" },
+        { text: "Login", onPress: () => router.push('/login') }
+      ],
+      "heart-outline"
+    );
+    return;
+  }
+
+  setTogglingFavorite(item.id);
+  const currentlyFavorited = favoriteStatuses[item.id] || false;
+
+  try {
+    if (currentlyFavorited) {
+      await removeFromFavorites(item.id);
+      setFavoriteStatuses(prev => ({ ...prev, [item.id]: false }));
+      showCustomAlert(
+        "Removed from Favorites",
+        `${item.name} has been removed from your favorites.`,
+        [{ text: "OK", onPress: () => {} }],
+        "heart-dislike-outline"
+      );
+    } else {
+      await addToFavorites(item.id);
+      setFavoriteStatuses(prev => ({ ...prev, [item.id]: true }));
+      showCustomAlert(
+        "Added to Favorites",
+        `${item.name} has been added to your favorites!`,
+        [
+          { text: "Continue Shopping", onPress: () => {}, style: "cancel" },
+          { text: "View Favorites", onPress: () => router.push('/favorites') }
+        ],
+        "heart-outline"
+      );
+    }
+  } catch (error: any) {
+    console.error("Failed to toggle favorite:", error);
+    
+    if (error.response?.status === 401) {
+      showCustomAlert(
+        "Session Expired",
+        "Please log in again.",
+        [{ text: "OK", onPress: () => router.push('/login') }],
+        "warning-outline"
+      );
+    } else {
+      showCustomAlert(
+        "Error",
+        error.message || "Failed to update favorites. Please try again.",
+        [{ text: "OK", onPress: () => {} }],
+        "warning-outline"
+      );
+    }
+  } finally {
+    setTogglingFavorite(null);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -870,5 +984,27 @@ const styles = StyleSheet.create({
   menuFooterText: {
     fontSize: 12,
     color: "#999",
+  },
+    imageContainer: {
+    position: "relative",
+  },
+  favoriteButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });

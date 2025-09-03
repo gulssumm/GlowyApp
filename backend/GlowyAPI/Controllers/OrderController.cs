@@ -214,8 +214,8 @@ namespace GlowyAPI.Controllers
                         Id = oi.Id,
                         JewelleryId = oi.JewelleryId,
                         Name = oi.Jewellery.Name,
-                        Description = oi.Jewellery.Description, // Add description
-                        ImageUrl = ImageUrlHelper.ProcessImageUrl(oi.Jewellery.ImageUrl, Request), // Fix: Process image URL
+                        Description = oi.Jewellery.Description,
+                        ImageUrl = ImageUrlHelper.ProcessImageUrl(oi.Jewellery.ImageUrl, Request), 
                         Quantity = oi.Quantity,
                         Price = oi.Price
                     }).ToList()
