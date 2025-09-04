@@ -356,6 +356,19 @@ export default function MainScreen() {
         )
       },
       {
+        id: 'cart',
+        icon: 'cart',
+        action: () => isLoggedIn ? handleNavigation('/cart') : showCustomAlert(
+          "Login Required",
+          "Please log in to view your cart.",
+          [
+            { text: "Cancel", onPress: () => {}, style: "cancel" },
+            { text: "Login", onPress: () => router.push('/cart') }
+          ],
+          "cart-outline"
+        ),
+      },
+      {
         id: 'profile',
         icon: 'person',
         action: () => isLoggedIn ? handleNavigation('/profile') : showCustomAlert(
@@ -498,18 +511,26 @@ export default function MainScreen() {
   );
 
   const renderBottomNavButton = (button: any) => (
-    <TouchableOpacity
-      key={button.id}
-      style={styles.bottomNavButton}
-      onPress={button.action}
-    >
+  <TouchableOpacity
+    key={button.id}
+    style={styles.bottomNavButton}
+    onPress={button.action}
+  >
+    <View style={button.id === 'cart' ? styles.cartButton : {}}>
       <Ionicons
         name={button.isActive ? button.icon : `${button.icon}-outline`}
         size={24}
         color={button.isActive ? "#800080" : "#666"}
       />
-    </TouchableOpacity>
-  );
+      {button.id === 'cart' && cartCount > 0 && (
+        <View style={styles.cartBadge}>
+          <Text style={styles.cartBadgeText}>{cartCount}</Text>
+        </View>
+      )}
+    </View>
+  </TouchableOpacity>
+);
+
 
   // Fetch favorite statuses when jewelries or login state changes
   const fetchFavoriteStatuses = async () => {
@@ -604,14 +625,6 @@ const toggleFavorite = async (item: Jewellery, event: any) => {
           <Ionicons name="menu" size={28} color="#800080" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Glowy ✨</Text>
-        <TouchableOpacity style={styles.cartButton} onPress={() => router.push('/cart')}>
-          <Ionicons name="bag-outline" size={28} color="#800080" />
-          {cartCount > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{cartCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
       </View>
 
       {/* Content with bottom padding to avoid overlap with bottom nav */}
