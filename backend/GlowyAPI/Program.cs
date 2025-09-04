@@ -1,5 +1,6 @@
 using GlowyAPI.Data;
 using GlowyAPI.Models;
+using GlowyAPI.Seeders;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -190,7 +191,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// FIXED: Correct middleware order
 app.UseHttpsRedirection();
 
 // Static files MUST come before CORS and Authentication
@@ -203,7 +203,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseRouting();
 app.UseCors("AllowAll");
 
-// Add custom middleware to log all requests
+// Custom middleware to log all requests
 app.Use(async (context, next) =>
 {
     Console.WriteLine($"=== REQUEST: {context.Request.Method} {context.Request.Path} ===");
@@ -231,53 +231,60 @@ app.MapControllers();
 Console.WriteLine("=== SERVER STARTING ===");
 Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
 
-// ADDED: Database setup and seeding
+// Database setup and seeding
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Ensure database is created
-    db.Database.EnsureCreated();
-
-    // Show all table names in console
-    var connection = db.Database.GetDbConnection();
-    connection.Open();
-    var command = connection.CreateCommand();
-    command.CommandText = "SELECT name FROM sqlite_master WHERE type='table';";
-    var reader = command.ExecuteReader();
-
-    Console.WriteLine("=== TABLES IN DATABASE ===");
-    while (reader.Read())
-    {
-        Console.WriteLine($"Table: {reader["name"]}");
-    }
-    reader.Close();
-    connection.Close();
-
-    // CRITICAL: Seed the database with jewelry data
     try
     {
-        AppDbContext.SeedJewelries(db);
+        // Ensure database is created
+        await context.Database.EnsureCreatedAsync();
+
+        // Show all table names in console
+        var connection = context.Database.GetDbConnection();
+        await connection.OpenAsync();
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT name FROM sqlite_master WHERE type='table';";
+        var reader = await command.ExecuteReaderAsync();
+
+        Console.WriteLine("=== TABLES IN DATABASE ===");
+        while (await reader.ReadAsync())
+        {
+            Console.WriteLine($"Table: {reader["name"]}");
+        }
+        await reader.CloseAsync();
+        await connection.CloseAsync();
+
+        // Seed all data using DatabaseSeeder
+        await DatabaseSeeder.SeedAllAsync(context);
+
         Console.WriteLine("=== DATABASE SEEDING COMPLETED ===");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"=== DATABASE SEEDING FAILED: {ex.Message} ===");
+        Console.WriteLine($"=== DATABASE SETUP/SEEDING FAILED: {ex.Message} ===");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
     }
 }
 
-// Log where static files should be served from
+// Log static files info
 var webRootPath = app.Environment.WebRootPath;
 Console.WriteLine($"=== STATIC FILES INFO ===");
 Console.WriteLine($"WebRootPath: {webRootPath}");
 Console.WriteLine($"Static files will be served from: {webRootPath}");
+
 if (Directory.Exists(Path.Combine(webRootPath ?? "", "images", "jewelry")))
 {
     var imageFiles = Directory.GetFiles(Path.Combine(webRootPath, "images", "jewelry"));
     Console.WriteLine($"Found {imageFiles.Length} image files in jewelry folder");
-    foreach (var file in imageFiles)
+    foreach (var file in imageFiles.Take(10)) // Show only first 10 files
     {
         Console.WriteLine($"  - {Path.GetFileName(file)}");
+    }
+    if (imageFiles.Length > 10)
+    {
+        Console.WriteLine($"  ... and {imageFiles.Length - 10} more files");
     }
 }
 else

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_URL = process.env.API_URL || 'https://5a97f692be2f.ngrok-free.app/api';
+const API_URL = process.env.API_URL || 'https://7f1a23ff4fb8.ngrok-free.app/api';
 
 console.log('Using API URL:', API_URL);
 
@@ -545,5 +545,42 @@ export const getBatchFavoriteStatus = async (jewelryIds: number[]) => {
   } catch (error) {
     console.error('Error checking batch favorite status:', error);
     throw error;
+  }
+};
+
+// ===== CATEGORY FUNCTIONS =====
+export const getAllCategories = async () => {
+  try {
+    console.log("=== FETCHING ALL CATEGORIES ===");
+    const res = await api.get('/category');
+    console.log("Categories fetched successfully:", res.data.length, "items");
+    return res.data;
+  } catch (err: any) {
+    console.error('Get categories error:', err);
+    throw err;
+  }
+};
+
+export const getJewelriesByCategory = async (categoryId: number) => {
+  try {
+    console.log(`=== FETCHING JEWELRIES BY CATEGORY ID: ${categoryId} ===`);
+    const res = await api.get(`/jewellery/category/${categoryId}`);
+    console.log("Category jewelries fetched successfully:", res.data.length, "items");
+    return res.data;
+  } catch (err: any) {
+    console.error('Get jewelries by category error:', err);
+    throw err;
+  }
+};
+
+export const getCategoryById = async (categoryId: number) => {
+  try {
+    console.log(`=== FETCHING CATEGORY ${categoryId} ===`);
+    const res = await api.get(`/category/${categoryId}`);
+    console.log("Category fetched successfully:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error('Get category error:', err);
+    throw err;
   }
 };

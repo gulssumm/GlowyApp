@@ -64,7 +64,7 @@ namespace GlowyAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Addresses", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Cart", b =>
@@ -86,7 +86,7 @@ namespace GlowyAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.CartItem", b =>
@@ -113,7 +113,45 @@ namespace GlowyAPI.Migrations
 
                     b.HasIndex("JewelleryId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
+                });
+
+            modelBuilder.Entity("GlowyAPI.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IconName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Favorite", b =>
@@ -138,13 +176,16 @@ namespace GlowyAPI.Migrations
                     b.HasIndex("UserId", "JewelleryId")
                         .IsUnique();
 
-                    b.ToTable("Favorites");
+                    b.ToTable("Favorites", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Jewellery", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
@@ -173,7 +214,9 @@ namespace GlowyAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Jewelleries");
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Jewelleries", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Order", b =>
@@ -216,7 +259,7 @@ namespace GlowyAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.OrderItem", b =>
@@ -243,7 +286,7 @@ namespace GlowyAPI.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.User", b =>
@@ -273,7 +316,7 @@ namespace GlowyAPI.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Address", b =>
@@ -336,6 +379,17 @@ namespace GlowyAPI.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GlowyAPI.Models.Jewellery", b =>
+                {
+                    b.HasOne("GlowyAPI.Models.Category", "Category")
+                        .WithMany("Jewelleries")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("GlowyAPI.Models.Order", b =>
                 {
                     b.HasOne("GlowyAPI.Models.Address", "Address")
@@ -377,6 +431,11 @@ namespace GlowyAPI.Migrations
             modelBuilder.Entity("GlowyAPI.Models.Cart", b =>
                 {
                     b.Navigation("CartItems");
+                });
+
+            modelBuilder.Entity("GlowyAPI.Models.Category", b =>
+                {
+                    b.Navigation("Jewelleries");
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Jewellery", b =>

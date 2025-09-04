@@ -4,7 +4,7 @@ using GlowyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using GlowyAPI.Helpers; // Add this using statement
+using GlowyAPI.Helpers;
 
 namespace GlowyAPI.Controllers
 {
@@ -36,6 +36,14 @@ namespace GlowyAPI.Controllers
 
         private async Task<Cart> GetOrCreateUserCart(int userId)
         {
+            // === FIX: Add a user existence check to prevent foreign key errors ===
+            var userExists = await _context.Users.FindAsync(userId);
+            if (userExists == null)
+            {
+                throw new KeyNotFoundException($"User with ID {userId} not found.");
+            }
+            // === END OF FIX ===
+
             var cart = await _context.Carts
                 .Include(c => c.CartItems)
                 .ThenInclude(ci => ci.Jewellery)
@@ -74,14 +82,13 @@ namespace GlowyAPI.Controllers
                         Name = ci.Jewellery.Name,
                         Description = ci.Jewellery.Description,
                         Price = ci.Jewellery.Price,
-                        ImageUrl = ImageUrlHelper.ProcessImageUrl(ci.Jewellery.ImageUrl, Request), // Process image URL here
+                        ImageUrl = ImageUrlHelper.ProcessImageUrl(ci.Jewellery.ImageUrl, Request),
                         Quantity = ci.Quantity,
                         AddedAt = ci.AddedAt
                     }).ToList(),
                     TotalItems = cart.CartItems.Sum(ci => ci.Quantity),
                     TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.Jewellery.Price)
                 };
-
                 return Ok(cartResponse);
             }
             catch (Exception ex)
@@ -97,37 +104,31 @@ namespace GlowyAPI.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-
-                // Check if jewellery exists
-                var jewellery = await _context.Jewelleries.FindAsync(request.JewelleryId);
-                if (jewellery == null)
-                {
-                    return NotFound(new { message = "Jewellery not found" });
-                }
-
                 var cart = await GetOrCreateUserCart(userId);
 
-                // Check if item already exists in cart
-                var existingCartItem = cart.CartItems
-                    .FirstOrDefault(ci => ci.JewelleryId == request.JewelleryId);
+                var existingCartItem = await _context.CartItems
+                    .FirstOrDefaultAsync(ci => ci.CartId == cart.Id && ci.JewelleryId == request.JewelleryId);
 
                 if (existingCartItem != null)
                 {
                     existingCartItem.Quantity += request.Quantity;
+                    cart.UpdatedAt = DateTime.UtcNow;
                 }
                 else
                 {
-                    var newCartItem = new CartItem
+                    var jewellery = await _context.Jewelleries.FindAsync(request.JewelleryId);
+                    if (jewellery == null)
+                    {
+                        return NotFound(new { message = "Jewellery not found." });
+                    }
+                    _context.CartItems.Add(new CartItem
                     {
                         CartId = cart.Id,
                         JewelleryId = request.JewelleryId,
                         Quantity = request.Quantity,
                         AddedAt = DateTime.UtcNow
-                    };
-                    _context.CartItems.Add(newCartItem);
+                    });
                 }
-
-                cart.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
                 return Ok(new { message = "Item added to cart successfully" });
@@ -139,61 +140,28 @@ namespace GlowyAPI.Controllers
             }
         }
 
-        [HttpPut("update/{itemId}")]
-        public async Task<IActionResult> UpdateCartItem(int itemId, [FromBody] UpdateCartItemRequest request)
+        [HttpDelete("remove/{jewelleryId}")]
+        public async Task<IActionResult> RemoveFromCart(int jewelleryId)
         {
             try
             {
                 var userId = GetCurrentUserId();
+                var cart = await _context.Carts
+                    .Include(c => c.CartItems)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
 
-                var cartItem = await _context.CartItems
-                    .Include(ci => ci.Cart)
-                    .FirstOrDefaultAsync(ci => ci.Id == itemId && ci.Cart.UserId == userId);
+                if (cart == null)
+                {
+                    return NotFound(new { message = "Cart not found." });
+                }
 
+                var cartItem = cart.CartItems.FirstOrDefault(ci => ci.JewelleryId == jewelleryId);
                 if (cartItem == null)
                 {
-                    return NotFound(new { message = "Cart item not found" });
-                }
-
-                if (request.Quantity <= 0)
-                {
-                    _context.CartItems.Remove(cartItem);
-                }
-                else
-                {
-                    cartItem.Quantity = request.Quantity;
-                }
-
-                cartItem.Cart.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Cart updated successfully" });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating cart item: {ex.Message}");
-                return StatusCode(500, new { message = "Internal server error" });
-            }
-        }
-
-        [HttpDelete("{itemId}")]
-        public async Task<IActionResult> RemoveFromCart(int itemId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-
-                var cartItem = await _context.CartItems
-                    .Include(ci => ci.Cart)
-                    .FirstOrDefaultAsync(ci => ci.Id == itemId && ci.Cart.UserId == userId);
-
-                if (cartItem == null)
-                {
-                    return NotFound(new { message = "Cart item not found" });
+                    return NotFound(new { message = "Item not found in cart." });
                 }
 
                 _context.CartItems.Remove(cartItem);
-                cartItem.Cart.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
                 return Ok(new { message = "Item removed from cart" });
@@ -222,7 +190,6 @@ namespace GlowyAPI.Controllers
                     cart.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
                 }
-
                 return Ok(new { message = "Cart cleared successfully" });
             }
             catch (Exception ex)

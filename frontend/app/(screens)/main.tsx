@@ -297,7 +297,7 @@ export default function MainScreen() {
     const commonItems: MenuItem[] = [
       { id: 'home', title: 'Home', icon: 'home', action: () => setMenuVisible(false)},
       { id: 'products', title: 'All Products', icon: 'diamond', action: () => handleComingSoon('All Products') },
-      { id: 'categories', title: 'Categories', icon: 'grid', action: () => handleComingSoon('Categories') },
+      { id: 'categories', title: 'Categories', icon: 'grid', action: () => handleNavigation('/categories') , dividerAfter: true},
     ];
 
     if (isLoggedIn) {
@@ -632,9 +632,9 @@ const toggleFavorite = async (item: Jewellery, event: any) => {
           <Text style={styles.sectionTitle}>Categories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {['Rings','Necklaces','Earrings','Bracelets'].map(cat => (
-              <TouchableOpacity key={cat} style={styles.categoryCard} onPress={() => handleComingSoon(cat)}>
+              <TouchableOpacity key={cat} style={styles.categoryCard} onPress={() => router.push(`/categories?category=${cat}`)}>
                 <Ionicons name="diamond" size={30} color="#800080" />
-                <Text style={styles.categoryText}>{cat}</Text>
+                <Text style={styles.categoryText}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>

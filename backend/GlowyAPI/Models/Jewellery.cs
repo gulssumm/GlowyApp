@@ -21,8 +21,16 @@ namespace GlowyAPI.Models
         [MaxLength(500)]
         public string ImageUrl { get; set; } = string.Empty;
 
+        // Foreign key to Category
+        [Required]
+        public int CategoryId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation properties
+        [ForeignKey("CategoryId")]
+        public virtual Category Category { get; set; } = null!;
 
         // Navigation properties
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();

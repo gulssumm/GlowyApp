@@ -10,7 +10,7 @@ namespace GlowyAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]  // Require authentication for all favorite operations
+    [Authorize]
     public class FavoritesController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,6 +18,7 @@ namespace GlowyAPI.Controllers
         {
             _context = context;
         }
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -28,8 +29,7 @@ namespace GlowyAPI.Controllers
             return userId;
         }
 
-    // GET: api/favorites
-    [HttpGet]
+        [HttpGet]
         public async Task<IActionResult> GetUserFavorites()
         {
             try
@@ -41,10 +41,9 @@ namespace GlowyAPI.Controllers
                     .OrderByDescending(f => f.CreatedAt)
                     .ToListAsync();
 
-                // Process image URLs
                 foreach (var favorite in favorites)
                 {
-                    if(favorite.Jewellery != null)
+                    if (favorite.Jewellery != null)
                     {
                         favorite.Jewellery.ImageUrl = ImageUrlHelper.ProcessImageUrl(favorite.Jewellery.ImageUrl, Request);
                     }
@@ -74,33 +73,39 @@ namespace GlowyAPI.Controllers
                 return StatusCode(500, new { message = "An error occurred while retrieving favorites.", details = ex.Message });
             }
         }
-    
 
-    // POST: api/favorites/{jewelleryId}
-    [HttpPost("{jewelleryId}")]
+        [HttpPost("{jewelleryId}")]
         public async Task<IActionResult> AddToFavorites(int jewelleryId)
         {
             try
             {
                 var userId = GetCurrentUserId();
 
+                // === FIX: Add a user existence check to prevent foreign key errors ===
+                var userExists = await _context.Users.FindAsync(userId);
+                if (userExists == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
                 // Check if jewelry exists
                 var jewellery = await _context.Jewelleries.FindAsync(jewelleryId);
                 if (jewellery == null)
                 {
-                    return NotFound(new { message = "Jewelry item not found" });
+                    return NotFound(new { message = "Jewellery not found." });
                 }
 
-                // Check if already favorited
+                // Check if item is already in favorites
                 var existingFavorite = await _context.Favorites
-                    .FirstOrDefaultAsync(f => f.UserId == userId && f.JewelleryId == jewelleryId);
+                                             .FirstOrDefaultAsync(f => f.UserId == userId && f.JewelleryId == jewelleryId);
 
                 if (existingFavorite != null)
                 {
-                    return Conflict(new { message = "Item already in favorites" });
+                    _context.Favorites.Remove(existingFavorite);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { message = "Item removed from favorites successfully.", isFavorited = false });
                 }
 
-                // Add to favorites
                 var favorite = new Favorite
                 {
                     UserId = userId,
@@ -111,12 +116,7 @@ namespace GlowyAPI.Controllers
                 _context.Favorites.Add(favorite);
                 await _context.SaveChangesAsync();
 
-                return Ok(new
-                {
-                    message = "Added to favorites",
-                    favoriteId = favorite.Id,
-                    isFavorite = true
-                });
+                return Ok(new { message = "Item added to favorites successfully.", isFavorited = true });
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -124,59 +124,19 @@ namespace GlowyAPI.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in AddToFavorites: {ex.Message}");
-                return StatusCode(500, new { message = "Error adding to favorites" });
+                Console.WriteLine($"Error adding to favorites: {ex.Message}");
+                return StatusCode(500, new { message = "Internal server error." });
             }
         }
 
-        // DELETE: api/favorites/{jewelleryId}
-        [HttpDelete("{jewelleryId}")]
-        public async Task<IActionResult> RemoveFromFavorites(int jewelleryId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-
-                var favorite = await _context.Favorites
-                    .FirstOrDefaultAsync(f => f.UserId == userId && f.JewelleryId == jewelleryId);
-
-                if (favorite == null)
-                {
-                    return NotFound(new { message = "Favorite not found" });
-                }
-
-                _context.Favorites.Remove(favorite);
-                await _context.SaveChangesAsync();
-
-                return Ok(new
-                {
-                    message = "Removed from favorites",
-                    isFavorite = false
-                });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in RemoveFromFavorites: {ex.Message}");
-                return StatusCode(500, new { message = "Error removing from favorites" });
-            }
-        }
-
-        // GET: api/favorites/status/{jewelleryId}
         [HttpGet("status/{jewelleryId}")]
         public async Task<IActionResult> GetFavoriteStatus(int jewelleryId)
         {
             try
             {
                 var userId = GetCurrentUserId();
-
-                var isFavorite = await _context.Favorites
-                    .AnyAsync(f => f.UserId == userId && f.JewelleryId == jewelleryId);
-
-                return Ok(new { isFavorite });
+                var isFavorited = await _context.Favorites.AnyAsync(f => f.UserId == userId && f.JewelleryId == jewelleryId);
+                return Ok(new { isFavorited });
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -189,21 +149,17 @@ namespace GlowyAPI.Controllers
             }
         }
 
-        // GET: api/favorites/batch-status
         [HttpPost("batch-status")]
         public async Task<IActionResult> GetBatchFavoriteStatus([FromBody] List<int> jewelleryIds)
         {
             try
             {
                 var userId = GetCurrentUserId();
-
                 var favorites = await _context.Favorites
                     .Where(f => f.UserId == userId && jewelleryIds.Contains(f.JewelleryId))
                     .Select(f => f.JewelleryId)
                     .ToListAsync();
-
                 var result = jewelleryIds.ToDictionary(id => id, id => favorites.Contains(id));
-
                 return Ok(result);
             }
             catch (UnauthorizedAccessException ex)

@@ -23,23 +23,64 @@ namespace GlowyAPI.Controllers
         {
             try
             {
-                var items = await _context.Jewelleries.ToListAsync();
+                var items = await _context.Jewelleries
+                    .Include(j => j.Category)
+                    .Where(j => j.Category.IsActive)
+                    .ToListAsync();
+
                 Console.WriteLine($"Found {items.Count} jewelry items in database");
 
-                // Process image URLs to ensure they're full URLs
-                foreach (var item in items)
+                // Process image URLs and include category info
+                var result = items.Select(item => new
                 {
-                    var originalUrl = item.ImageUrl;
-                    item.ImageUrl = ImageUrlHelper.ProcessImageUrl(item.ImageUrl, Request);
-                    Console.WriteLine($"Item {item.Id}: {originalUrl} -> {item.ImageUrl}");
-                }
+                    id = item.Id,
+                    name = item.Name,
+                    description = item.Description,
+                    price = item.Price,
+                    imageUrl = ImageUrlHelper.ProcessImageUrl(item.ImageUrl, Request),
+                    categoryId = item.CategoryId,
+                    categoryName = item.Category.Name,
+                    createdAt = item.CreatedAt
+                });
 
-                return Ok(items);
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetAll: {ex.Message}");
                 return StatusCode(500, new { message = "Error fetching jewelry items" });
+            }
+        }
+
+        // GET: api/jewellery/category/{categoryId}
+        [HttpGet("category/{categoryId}")]
+        public async Task<IActionResult> GetByCategory(int categoryId)
+        {
+            try
+            {
+                var items = await _context.Jewelleries
+                    .Include(j => j.Category)
+                    .Where(j => j.CategoryId == categoryId && j.Category.IsActive)
+                    .ToListAsync();
+
+                var result = items.Select(item => new
+                {
+                    id = item.Id,
+                    name = item.Name,
+                    description = item.Description,
+                    price = item.Price,
+                    imageUrl = ImageUrlHelper.ProcessImageUrl(item.ImageUrl, Request),
+                    categoryId = item.CategoryId,
+                    categoryName = item.Category.Name,
+                    createdAt = item.CreatedAt
+                });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetByCategory: {ex.Message}");
+                return StatusCode(500, new { message = "Error fetching jewelry items by category" });
             }
         }
 

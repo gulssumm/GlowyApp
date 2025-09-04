@@ -19,129 +19,7 @@ namespace GlowyAPI.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
-
-        public static void SeedJewelries(AppDbContext context)
-        {
-            if (!context.Jewelleries.Any())
-            {
-                var jewelries = new List<Jewellery>
-                {
-                    new Jewellery
-                    {
-                        Name = "Diamond Ring",
-                        Description = "Beautiful diamond engagement ring",
-                        Price = 2500.00m,
-                        ImageUrl = "diamond-ring.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                    new Jewellery
-                    {
-                        Name = "Emerald Necklace",
-                        Description = "Elegant emerald necklace with gold setting",
-                        Price = 1850.00m,
-                        ImageUrl = "emerald-necklace.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                    new Jewellery
-                    {
-                        Name = "Diamond Tennis Bracelet",
-                        Description = "Classic diamond tennis bracelet",
-                        Price = 3200.00m,
-                        ImageUrl = "diamond-tennis-bracelet.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                    new Jewellery
-                    {
-                        Name = "Engagement Ring",
-                        Description = "Stunning solitaire engagement ring",
-                        Price = 4500.00m,
-                        ImageUrl = "engagement-ring.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                    new Jewellery
-                    {
-                        Name = "Pearl Earrings",
-                        Description = "Classic white pearl drop earrings",
-                        Price = 680.00m,
-                        ImageUrl = "pearl-earrings.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                    new Jewellery
-                    {
-                        Name = "Rose Gold Bangle",
-                        Description = "Elegant rose gold bangle bracelet",
-                        Price = 1200.00m,
-                        ImageUrl = "rose-gold-bangle.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                    new Jewellery
-                    {
-                        Name = "Ruby Bracelet",
-                        Description = "Exquisite ruby and diamond bracelet",
-                        Price = 2800.00m,
-                        ImageUrl = "ruby-bracelet.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    },
-                    new Jewellery
-                    {
-                        Name = "Gold Earrings",
-                        Description = "Elegant gold hoop earrings",
-                        Price = 950.00m,
-                        ImageUrl = "gold-earrings.jpg", // Store only filename
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    }
-                };
-
-                context.Jewelleries.AddRange(jewelries);
-                context.SaveChanges();
-                Console.WriteLine($"Seeded {jewelries.Count} jewelry items with local image filenames");
-            }
-        }
-
-        // Method to fix existing data with external URLs
-        public static async Task FixExistingImageUrls(AppDbContext context)
-        {
-            var jewelries = await context.Jewelleries.ToListAsync();
-            bool anyUpdated = false;
-
-            foreach (var jewelry in jewelries)
-            {
-                // If it has an external URL or full local URL, extract filename
-                if (jewelry.ImageUrl.Contains("http") || jewelry.ImageUrl.Contains("/"))
-                {
-                    // Extract filename from URL
-                    var fileName = Path.GetFileName(jewelry.ImageUrl);
-
-                    // If no proper filename found, create a generic one
-                    if (string.IsNullOrEmpty(fileName) || !fileName.Contains("."))
-                    {
-                        fileName = $"jewelry-{jewelry.Id}.jpg";
-                    }
-
-                    jewelry.ImageUrl = fileName;
-                    anyUpdated = true;
-                    Console.WriteLine($"Updated jewelry ID {jewelry.Id}: {fileName}");
-                }
-            }
-
-            if (anyUpdated)
-            {
-                await context.SaveChangesAsync();
-                Console.WriteLine($"Fixed image URLs for existing jewelry items");
-            }
-            else
-            {
-                Console.WriteLine("No jewelry items needed URL fixes");
-            }
-        }
+        public DbSet<Category> Categories { get; set; }
 
         // Helper method to generate correct URLs dynamically
         public static string GetImageUrl(HttpRequest request, string fileName)
@@ -162,6 +40,33 @@ namespace GlowyAPI.Data
                 .HasIndex(u => u.Username)
                 .IsUnique();
 
+            // Category configuration
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.IconName).HasMaxLength(100);
+                entity.HasIndex(e => e.Name).IsUnique();
+            });
+
+            // Jewellery configuration
+            modelBuilder.Entity<Jewellery>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.ImageUrl).HasMaxLength(500);
+                entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.CategoryId).IsRequired();
+
+                // Jewellery-Category relationship
+                entity.HasOne(j => j.Category)
+                      .WithMany(c => c.Jewelleries)
+                      .HasForeignKey(j => j.CategoryId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // Cart configuration
             modelBuilder.Entity<Cart>()
                 .HasOne(c => c.User)
@@ -181,11 +86,6 @@ namespace GlowyAPI.Data
                 .WithMany(j => j.CartItems)
                 .HasForeignKey(ci => ci.JewelleryId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            // Decimal precision for SQLite
-            modelBuilder.Entity<Jewellery>()
-                .Property(j => j.Price)
-                .HasColumnType("decimal(18,2)");
 
             // Address configuration
             modelBuilder.Entity<Address>()
@@ -230,12 +130,12 @@ namespace GlowyAPI.Data
                 .WithMany(u => u.Favorites)
                 .HasForeignKey(f => f.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Favorite>()
                 .HasOne(f => f.Jewellery)
                 .WithMany(j => j.Favorites)
                 .HasForeignKey(f => f.JewelleryId)
                 .OnDelete(DeleteBehavior.Cascade);
-
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

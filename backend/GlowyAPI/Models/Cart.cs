@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GlowyAPI.Models
 {
@@ -26,13 +27,17 @@ namespace GlowyAPI.Models
         [Required]
         public int JewelleryId { get; set; }
 
+        [Range(1, int.MaxValue)]
         [Required]
-        public int Quantity { get; set; }
+        public int Quantity { get; set; } = 1;
 
         public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
+        [ForeignKey("CartId")]
         public virtual Cart Cart { get; set; } = null!;
+
+        [ForeignKey("JewelleryId")]
         public virtual Jewellery Jewellery { get; set; } = null!;
     }
 }

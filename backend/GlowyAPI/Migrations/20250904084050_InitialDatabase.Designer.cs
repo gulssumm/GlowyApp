@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GlowyAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250828122843_AddressTableAdded")]
-    partial class AddressTableAdded
+    [Migration("20250904084050_InitialDatabase")]
+    partial class InitialDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -119,10 +119,76 @@ namespace GlowyAPI.Migrations
                     b.ToTable("CartItems");
                 });
 
+            modelBuilder.Entity("GlowyAPI.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IconName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("GlowyAPI.Models.Favorite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("JewelleryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JewelleryId");
+
+                    b.HasIndex("UserId", "JewelleryId")
+                        .IsUnique();
+
+                    b.ToTable("Favorites");
+                });
+
             modelBuilder.Entity("GlowyAPI.Models.Jewellery", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
@@ -150,6 +216,8 @@ namespace GlowyAPI.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Jewelleries");
                 });
@@ -295,6 +363,36 @@ namespace GlowyAPI.Migrations
                     b.Navigation("Jewellery");
                 });
 
+            modelBuilder.Entity("GlowyAPI.Models.Favorite", b =>
+                {
+                    b.HasOne("GlowyAPI.Models.Jewellery", "Jewellery")
+                        .WithMany("Favorites")
+                        .HasForeignKey("JewelleryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GlowyAPI.Models.User", "User")
+                        .WithMany("Favorites")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Jewellery");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GlowyAPI.Models.Jewellery", b =>
+                {
+                    b.HasOne("GlowyAPI.Models.Category", "Category")
+                        .WithMany("Jewelleries")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("GlowyAPI.Models.Order", b =>
                 {
                     b.HasOne("GlowyAPI.Models.Address", "Address")
@@ -338,9 +436,16 @@ namespace GlowyAPI.Migrations
                     b.Navigation("CartItems");
                 });
 
+            modelBuilder.Entity("GlowyAPI.Models.Category", b =>
+                {
+                    b.Navigation("Jewelleries");
+                });
+
             modelBuilder.Entity("GlowyAPI.Models.Jewellery", b =>
                 {
                     b.Navigation("CartItems");
+
+                    b.Navigation("Favorites");
                 });
 
             modelBuilder.Entity("GlowyAPI.Models.Order", b =>
@@ -351,6 +456,8 @@ namespace GlowyAPI.Migrations
             modelBuilder.Entity("GlowyAPI.Models.User", b =>
                 {
                     b.Navigation("Carts");
+
+                    b.Navigation("Favorites");
                 });
 #pragma warning restore 612, 618
         }
