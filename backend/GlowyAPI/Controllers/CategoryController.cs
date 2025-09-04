@@ -1,4 +1,5 @@
 ﻿using GlowyAPI.Data;
+using GlowyAPI.Helpers;
 using GlowyAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -78,9 +79,9 @@ namespace GlowyAPI.Controllers
             }
         }
 
-        // POST: api/category (Admin only - you might want to add authorization)
+        // POST: api/category (TODO: Admin only)
         [HttpPost]
-        // [Authorize(Roles = "Admin")] // Add this if you have admin roles
+        // [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Create([FromBody] CreateCategoryDto categoryDto)
         {
             try
@@ -220,38 +221,28 @@ namespace GlowyAPI.Controllers
         {
             try
             {
-                var category = await _context.Categories
-                    .Include(c => c.Jewelleries)
-                    .FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
-
-                if (category == null)
+                // Check if category exists and is active
+                var exists = await _context.Categories.AnyAsync(c => c.Id == id && c.IsActive);
+                if (!exists)
                 {
                     return NotFound(new { message = "Category not found" });
                 }
 
-                var jewelries = category.Jewelleries.Select(j => new
-                {
-                    id = j.Id,
-                    name = j.Name,
-                    description = j.Description,
-                    price = j.Price,
-                    imageUrl = j.ImageUrl,
-                    categoryId = j.CategoryId,
-                    categoryName = j.Category.Name
-                });
-
-                return Ok(new
-                {
-                    category = new
+                // Fetch jewelries only (frontend expects an array)
+                var jewelries = await _context.Jewelleries
+                    .Where(j => j.CategoryId == id)
+                    .Select(j => new
                     {
-                        id = category.Id,
-                        name = category.Name,
-                        description = category.Description,
-                        iconName = category.IconName
-                    },
-                    jewelries = jewelries,
-                    count = jewelries.Count()
-                });
+                        id = j.Id,
+                        name = j.Name,
+                        description = j.Description,
+                        price = j.Price,
+                        imageUrl = ImageUrlHelper.ProcessImageUrl(j.ImageUrl, Request),
+                        categoryId = j.CategoryId
+                    })
+                    .ToListAsync();
+
+                return Ok(jewelries);
             }
             catch (Exception ex)
             {
@@ -259,32 +250,33 @@ namespace GlowyAPI.Controllers
                 return StatusCode(500, new { message = "Error fetching category jewelries" });
             }
         }
-    }
 
-    // DTOs for API requests
-    public class CreateCategoryDto
-    {
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; } = string.Empty;
 
-        [MaxLength(500)]
-        public string? Description { get; set; }
+        // DTOs for API requests
+        public class CreateCategoryDto
+        {
+            [Required]
+            [MaxLength(100)]
+            public string Name { get; set; } = string.Empty;
 
-        [MaxLength(100)]
-        public string? IconName { get; set; }
-    }
+            [MaxLength(500)]
+            public string? Description { get; set; }
 
-    public class UpdateCategoryDto
-    {
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; } = string.Empty;
+            [MaxLength(100)]
+            public string? IconName { get; set; }
+        }
 
-        [MaxLength(500)]
-        public string? Description { get; set; }
+        public class UpdateCategoryDto
+        {
+            [Required]
+            [MaxLength(100)]
+            public string Name { get; set; } = string.Empty;
 
-        [MaxLength(100)]
-        public string? IconName { get; set; }
+            [MaxLength(500)]
+            public string? Description { get; set; }
+
+            [MaxLength(100)]
+            public string? IconName { get; set; }
+        }
     }
 }

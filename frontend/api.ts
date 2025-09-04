@@ -563,13 +563,25 @@ export const getAllCategories = async () => {
 
 export const getJewelriesByCategory = async (categoryId: number) => {
   try {
-    console.log(`=== FETCHING JEWELRIES BY CATEGORY ID: ${categoryId} ===`);
-    const res = await api.get(`/jewellery/category/${categoryId}`);
-    console.log("Category jewelries fetched successfully:", res.data.length, "items");
-    return res.data;
-  } catch (err: any) {
-    console.error('Get jewelries by category error:', err);
-    throw err;
+    const token = await getToken(); // get auth token
+    const response = await fetch(`${API_URL}/category/${categoryId}/jewelries`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`Fetched ${data.length} jewelries for category ${categoryId}`);
+    return data; 
+  } catch (error) {
+    console.error('Error fetching jewelries by category:', error);
+    throw error;
   }
 };
 

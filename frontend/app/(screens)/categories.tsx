@@ -34,16 +34,16 @@ interface FavoriteStatus {
 }
 
 const CATEGORIES = [
-  { id: 'rings', name: 'Rings', icon: 'diamond-outline' },
-  { id: 'necklaces', name: 'Necklaces', icon: 'ellipse-outline' },
-  { id: 'earrings', name: 'Earrings', icon: 'radio-outline' },
-  { id: 'bracelets', name: 'Bracelets', icon: 'remove-outline' },
+  { id: 1, name: 'Rings', icon: 'diamond-outline' },
+  { id: 2, name: 'Necklaces', icon: 'ellipse-outline' },
+  { id: 3, name: 'Earrings', icon: 'radio-outline' },
+  { id: 4, name: 'Bracelets', icon: 'remove-outline' },
 ];
 
 export default function CategoriesScreen() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState('rings');
+  const [selectedCategory, setSelectedCategory] = useState(1);
   const [jewelries, setJewelries] = useState<Jewellery[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -51,11 +51,13 @@ export default function CategoriesScreen() {
   const [favoriteStatuses, setFavoriteStatuses] = useState<FavoriteStatus>({});
   const [togglingFavorite, setTogglingFavorite] = useState<number | null>(null);
 
-  const fetchJewelriesByCategory = useCallback(async (category: string) => {
+  const fetchJewelriesByCategory = useCallback(async (categoryId: number) => {
     try {
       setLoading(true);
-      const data = await getJewelriesByCategory(category);
+      const data = await getJewelriesByCategory(categoryId);
       setJewelries(data || []);
+      console.log("Fetched jewelries:", data);
+
       
       // Fetch favorite statuses if logged in
       if (isLoggedIn && data && data.length > 0) {
@@ -81,7 +83,7 @@ export default function CategoriesScreen() {
     setRefreshing(false);
   };
 
-  const handleCategorySelect = (categoryId: string) => {
+  const handleCategorySelect = (categoryId: number) => { 
     setSelectedCategory(categoryId);
   };
 
@@ -232,7 +234,7 @@ export default function CategoriesScreen() {
         <FlatList
           data={CATEGORIES}
           renderItem={renderCategoryTab}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryTabs}

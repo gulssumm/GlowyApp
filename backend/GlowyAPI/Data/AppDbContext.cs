@@ -65,6 +65,8 @@ namespace GlowyAPI.Data
                       .WithMany(c => c.Jewelleries)
                       .HasForeignKey(j => j.CategoryId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(j => j.CategoryId);
             });
 
             // Cart configuration
