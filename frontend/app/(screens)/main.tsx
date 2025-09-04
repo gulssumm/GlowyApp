@@ -803,13 +803,15 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   productsSection: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   productRow: {
     justifyContent: "space-between",
+    paddingHorizontal: 5,
   },
   productCard: {
-    flex: 1,
+    width: '48%',
     backgroundColor: "#fff",
     borderRadius: 15,
     marginBottom: 15,
