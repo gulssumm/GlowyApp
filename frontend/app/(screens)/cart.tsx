@@ -83,13 +83,13 @@ export default function CartScreen() {
     }, [isLoggedIn])
   );
 
-  const updateQuantity = async (itemId: number, change: number, currentQuantity: number) => {
+  const updateQuantity = async (jewelleryId: number, change: number, currentQuantity: number) => {
     const newQuantity = currentQuantity + change;
     
     if (newQuantity < 1) return;
 
     try {
-      await updateCartItem(itemId, newQuantity);
+      await updateCartItem(jewelleryId, newQuantity);
       await fetchCart(); // Refresh cart data
     } catch (error: any) {
       console.error("Error updating quantity:", error);
@@ -97,7 +97,7 @@ export default function CartScreen() {
     }
   };
 
-  const removeItem = async (itemId: number, itemName: string) => {
+  const removeItem = async (jewelleryId: number, itemName: string) => {
     Alert.alert(
       "Remove Item",
       `Are you sure you want to remove "${itemName}" from your cart?`,
@@ -108,7 +108,7 @@ export default function CartScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await removeFromCart(itemId);
+              await removeFromCart(jewelleryId);
               await fetchCart(); // Refresh cart data
             } catch (error: any) {
               console.error("Error removing item:", error);
@@ -207,7 +207,7 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
         <View style={styles.quantityRow}>
           <TouchableOpacity
             style={[styles.quantityButton, item.quantity <= 1 && styles.quantityButtonDisabled]}
-            onPress={() => updateQuantity(item.id, -1, item.quantity)}
+            onPress={() => updateQuantity(item.jewelleryId, -1, item.quantity)}
             disabled={item.quantity <= 1}
           >
             <Ionicons
@@ -219,7 +219,7 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
           <Text style={styles.quantityText}>{item.quantity}</Text>
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, 1, item.quantity)}
+            onPress={() => updateQuantity(item.jewelleryId, 1, item.quantity)}
           >
             <Ionicons name="add" size={16} color="#800080" />
           </TouchableOpacity>

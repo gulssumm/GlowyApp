@@ -140,6 +140,38 @@ namespace GlowyAPI.Controllers
             }
         }
 
+        [HttpPut("update/{jewelleryId}")]
+        public async Task<IActionResult> UpdateCartItem(int jewelleryId, [FromBody] UpdateCartItemRequest request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var cart = await _context.Carts
+                    .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Jewellery)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                if (cart == null)
+                    return NotFound(new { message = "Cart not found." });
+
+                var cartItem = cart.CartItems.FirstOrDefault(ci => ci.JewelleryId == jewelleryId);
+                if (cartItem == null)
+                    return NotFound(new { message = "Item not found in cart." });
+
+                cartItem.Quantity = request.Quantity;
+                cart.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Cart item updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating cart item: {ex.Message}");
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+
         [HttpDelete("remove/{jewelleryId}")]
         public async Task<IActionResult> RemoveFromCart(int jewelleryId)
         {
@@ -148,6 +180,7 @@ namespace GlowyAPI.Controllers
                 var userId = GetCurrentUserId();
                 var cart = await _context.Carts
                     .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Jewellery)
                     .FirstOrDefaultAsync(c => c.UserId == userId);
 
                 if (cart == null)

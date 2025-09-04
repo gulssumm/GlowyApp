@@ -227,7 +227,7 @@ export const getCart = async () => {
 
 export const addToCart = async (jewelleryId: number, quantity: number = 1) => {
   try {
-    console.log(`=== ADDING TO CART ===`);
+    console.log("=== ADDING TO CART ===");
     console.log(`Jewellery ID: ${jewelleryId}, Quantity: ${quantity}`);
     
     const res = await api.post('/cart/add', {
@@ -244,12 +244,12 @@ export const addToCart = async (jewelleryId: number, quantity: number = 1) => {
   }
 };
 
-export const updateCartItem = async (itemId: number, quantity: number) => {
+export const updateCartItem = async (jewelleryId: number, quantity: number) => {
   try {
-    console.log(`=== UPDATING CART ITEM ===`);
-    console.log(`Item ID: ${itemId}, New Quantity: ${quantity}`);
+    console.log("=== UPDATING CART ITEM ===");
+    console.log(`Jewellery ID: ${jewelleryId}, New Quantity: ${quantity}`);
     
-    const res = await api.put(`/cart/update/${itemId}`, { quantity });
+    const res = await api.put(`/cart/update/${jewelleryId}`, { quantity });
     console.log("Cart item updated successfully:", res.data);
     return res.data;
   } catch (err: any) {
@@ -259,12 +259,12 @@ export const updateCartItem = async (itemId: number, quantity: number) => {
   }
 };
 
-export const removeFromCart = async (itemId: number) => {
+export const removeFromCart = async (jewelleryId: number) => {
   try {
-    console.log(`=== REMOVING FROM CART ===`);
-    console.log(`Item ID: ${itemId}`);
+    console.log("=== REMOVING FROM CART ===");
+    console.log(`Jewellery ID: ${jewelleryId}`);
     
-    const res = await api.delete(`/cart/${itemId}`);
+    const res = await api.delete(`/cart/remove/${jewelleryId}`);
     console.log("Removed from cart successfully:", res.data);
     return res.data;
   } catch (err: any) {
@@ -286,6 +286,7 @@ export const clearCart = async () => {
     throw err;
   }
 };
+
 
 // ===== ADDRESS FUNCTIONS =====
 
