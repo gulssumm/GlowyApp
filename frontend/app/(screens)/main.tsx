@@ -15,7 +15,8 @@ import {
 } from "react-native";
 import { addToFavorites, addToCart as apiAddToCart, logoutUser as apiLogoutUser, getAllJewelries, getBatchFavoriteStatus, getCart, removeFromFavorites } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-import { ButtonStyles } from "../../styles/buttons"; // Import the button styles
+import { ButtonStyles } from "../../styles/buttons"; 
+import { headerStyles, commonColors, jewelryCardStyles } from "../../styles/commonStyles";
 
 interface Jewellery { id: number; name: string; description: string; price: number; imageUrl: string; }
 interface MenuItem { id: string; title: string; icon: string; action: () => void; color?: string; dividerAfter?: boolean; }
@@ -437,11 +438,20 @@ export default function MainScreen() {
   const isTogglingThis = togglingFavorite === item.id;
   
   return (
-    <TouchableOpacity style={styles.productCard} onPress={() => router.push(`/product-detail?id=${item.id}`)}>
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+    <TouchableOpacity 
+      style={jewelryCardStyles.card} 
+      onPress={() => router.push(`/product-detail?id=${item.id}`)}
+    >
+      <View style={jewelryCardStyles.imageContainer}>
+        <Image 
+          source={{ uri: item.imageUrl }} 
+          style={jewelryCardStyles.image} 
+        />
         <TouchableOpacity 
-          style={[styles.favoriteButton, isTogglingThis && { opacity: 0.7 }]}
+          style={[
+            jewelryCardStyles.favoriteButton, 
+            isTogglingThis && { opacity: 0.7 }
+          ]}
           onPress={(e) => toggleFavorite(item, e)}
           disabled={isTogglingThis}
         >
@@ -454,21 +464,23 @@ export default function MainScreen() {
                   : "heart-outline"
             } 
             size={20} 
-            color={isFavorited ? "#ff4444" : "#666"} 
+            color={isFavorited ? commonColors.error : commonColors.text.secondary} 
           />
         </TouchableOpacity>
       </View>
-      <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.productDescription}>{item.description}</Text>
-        <Text style={styles.productPrice}>${item.price.toLocaleString()}</Text>
+      <View style={jewelryCardStyles.info}>
+        <Text style={jewelryCardStyles.name}>{item.name}</Text>
+        <Text style={jewelryCardStyles.description}>{item.description}</Text>
+        <Text style={jewelryCardStyles.price}>
+          ${item.price.toLocaleString()}
+        </Text>
         <TouchableOpacity 
           style={[
-            styles.addToCartButton, 
+            jewelryCardStyles.addToCartButton, 
             addingToCart === item.id && { opacity: 0.7 }
           ]} 
           onPress={(e) => {
-            e.stopPropagation(); // Prevent navigation when clicking add to cart
+            e.stopPropagation();
             addToCart(item);
           }}
           disabled={addingToCart === item.id}
@@ -476,9 +488,9 @@ export default function MainScreen() {
           <Ionicons 
             name={addingToCart === item.id ? "time-outline" : "bag-add"} 
             size={20} 
-            color="#fff" 
+            color={commonColors.text.white} 
           />
-          <Text style={styles.addToCartText}>
+          <Text style={jewelryCardStyles.addToCartText}>
             {addingToCart === item.id ? "Adding..." : "Add to Cart"}
           </Text>
         </TouchableOpacity>
@@ -607,12 +619,12 @@ const toggleFavorite = async (item: Jewellery, event: any) => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-          <Ionicons name="menu" size={28} color="#800080" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Glowy ✨</Text>
-      </View>
+      <View style={headerStyles.container}>
+  <TouchableOpacity style={headerStyles.menuButton} onPress={toggleMenu}>
+    <Ionicons name="menu" size={28} color={commonColors.primary} />
+  </TouchableOpacity>
+  <Text style={headerStyles.title}>Glowy ✨</Text>
+</View>
 
       {/* Content with bottom padding to avoid overlap with bottom nav */}
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -705,24 +717,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  menuButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#800080",
-  },
   cartButton: {
     position: "relative",
     padding: 5,
@@ -809,62 +803,6 @@ const styles = StyleSheet.create({
   productRow: {
     justifyContent: "space-between",
     paddingHorizontal: 5,
-  },
-  productCard: {
-    width: '48%',
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    marginBottom: 15,
-    marginHorizontal: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  productImage: {
-    width: "100%",
-    height: 150,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-  },
-  productInfo: {
-    padding: 12,
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-  },
-  productDescription: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 8,
-    lineHeight: 16,
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#800080",
-    marginBottom: 10,
-  },
-  addToCartButton: {
-    backgroundColor: "#800080",
-    borderRadius: 8,
-    padding: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addToCartText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-    marginLeft: 4,
   },
   // Alert Button Container for multiple buttons
   alertButtonContainer: {
@@ -986,27 +924,5 @@ const styles = StyleSheet.create({
   menuFooterText: {
     fontSize: 12,
     color: "#999",
-  },
-    imageContainer: {
-    position: "relative",
-  },
-  favoriteButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
   },
 });

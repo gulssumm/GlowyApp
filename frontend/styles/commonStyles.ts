@@ -1,53 +1,34 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
-export const Colors = {
+const { width } = Dimensions.get('window');
+
+// Define base colors
+export const commonColors = {
   primary: '#800080',
-  secondary: '#f8f4ff',
-  accent: '#ff4444',
-  text: '#333',
-  textLight: '#666',
-  textMuted: '#999',
-  white: '#fff',
-  border: '#f0f0f0',
   background: '#fff',
-  shadow: '#000',
+  border: '#f0f0f0',
+  text: {
+    primary: '#333',
+    secondary: '#666',
+    white: '#fff' 
+  },
+  error: '#ff4444',
+  success: '#4BB543',
+  warning: '#ffbb33',
 };
 
-export const CommonStyles = StyleSheet.create({
-  // Container Styles
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  
-  // Header Styles
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  
-  // Product Card Styles (shared across screens)
-  productCard: {
-    width: '48%',
-    backgroundColor: Colors.white,
-    borderRadius: 15,
-    marginBottom: 15,
-    shadowColor: Colors.shadow,
+// Define common spacing
+export const commonSpacing = {
+  xs: 5,
+  s: 8,
+  m: 15,
+  l: 20,
+};
+
+// Define common shadow
+export const commonShadow = {
+  light: {
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -55,145 +36,95 @@ export const CommonStyles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  }
+};
+
+// Header specific styles
+export const headerStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: commonSpacing.l,
+    paddingVertical: commonSpacing.m,
+    backgroundColor: commonColors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: commonColors.border,
   },
-  productImage: {
-    width: '100%',
+  menuButton: {
+    padding: commonSpacing.xs,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: commonColors.primary,
+  }
+});
+
+// Jewelry card styles
+export const jewelryCardStyles = StyleSheet.create({
+  card: {
+    width: '48%',
+    backgroundColor: commonColors.background,
+    borderRadius: 15,
+    marginBottom: 15,
+    marginHorizontal: 5,
+    ...commonShadow.light,
+  },
+  imageContainer: {
+    position: "relative",
+  },
+  image: {
+    width: "100%",
     height: 150,
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    resizeMode: 'cover',
   },
-  productInfo: {
-    padding: 12,
+  favoriteButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    ...commonShadow.light,
   },
-  productName: {
+  info: {
+    padding: commonSpacing.m,
+  },
+  name: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.text,
+    fontWeight: "bold",
+    color: commonColors.text.primary,
     marginBottom: 4,
   },
-  productDescription: {
+  description: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: commonColors.text.secondary,
     marginBottom: 8,
     lineHeight: 16,
   },
-  productPrice: {
+  price: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.primary,
+    fontWeight: "bold",
+    color: commonColors.primary,
     marginBottom: 10,
-  },
-  
-  // Button Styles
-  primaryButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonText: {
-    color: Colors.white,
-    fontSize: 14,
-    fontWeight: 'bold',
   },
   addToCartButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: commonColors.primary,
     borderRadius: 8,
     padding: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   addToCartText: {
-    color: Colors.white,
+    color: commonColors.text.white,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 4,
-  },
-  
-  // Layout Styles
-  productRow: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 5,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 15,
-  },
-  
-  // Loading Styles
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: Colors.textLight,
-    marginTop: 10,
-  },
-  
-  // Empty State Styles
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginTop: 20,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: Colors.textLight,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 30,
-  },
+  }
 });
-
-// Typography Styles
-export const Typography = StyleSheet.create({
-  h1: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  h2: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  h3: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  body: {
-    fontSize: 16,
-    color: Colors.text,
-  },
-  caption: {
-    fontSize: 12,
-    color: Colors.textLight,
-  },
-});
-
-// Spacing utilities
-export const Spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 40,
-};
