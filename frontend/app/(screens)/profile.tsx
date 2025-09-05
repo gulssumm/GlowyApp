@@ -250,6 +250,16 @@ export default function Profile() {
               <Ionicons name="chevron-forward" size={20} color="#ccc" />
             </TouchableOpacity>
 
+            {/* Addresses button */}
+            <TouchableOpacity
+              style={styles.optionButton}
+              onPress={() => router.push("/addresses")}
+            >
+              <Ionicons name="location-outline" size={24} color="#800080" />
+              <Text style={styles.optionText}>Addresses</Text>
+              <Ionicons name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
+
             {/* Change Password button */}
             <TouchableOpacity
               style={styles.optionButton}
