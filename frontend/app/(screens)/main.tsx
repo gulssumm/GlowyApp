@@ -343,19 +343,6 @@ export default function MainScreen() {
         )
       },
       {
-        id: 'orders',
-        icon: 'bag',
-        action: () => isLoggedIn ? handleNavigation('/myorders') : showCustomAlert(
-          "Login Required",
-          "Please log in to see your orders.",
-          [
-            { text: "Cancel", onPress: () => {}, style: "cancel" },
-            { text: "Login", onPress: () => router.push('/login') }
-          ],
-          "bag-outline"
-        )
-      },
-      {
         id: 'cart',
         icon: 'cart',
         action: () => isLoggedIn ? handleNavigation('/cart') : showCustomAlert(

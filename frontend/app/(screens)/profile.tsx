@@ -35,7 +35,7 @@ export default function Profile() {
       return;
     }
     setWarning(""); // Clear warning message if validation passes
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(editedUser.email)) {
       Alert.alert("Error", "Please enter a valid email address");
@@ -63,7 +63,7 @@ export default function Profile() {
       setIsEditing(false);
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      
+
       // Handle specific error cases
       if (error.response?.status === 401) {
         Alert.alert("Session Expired", "Please log in again", [
@@ -81,7 +81,7 @@ export default function Profile() {
         const errorMessage = error.response?.data?.message || error.message || "Failed to update profile";
         Alert.alert("Error", errorMessage);
       }
-      
+
       // Reset form to original values on error
       if (authUser) {
         setEditedUser({ username: authUser.username, email: authUser.email });
@@ -134,8 +134,8 @@ export default function Profile() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Please log in to view your profile</Text>
-          <TouchableOpacity 
-            style={styles.loginButton} 
+          <TouchableOpacity
+            style={styles.loginButton}
             onPress={() => router.replace("/login")}
           >
             <Text style={styles.loginButtonText}>Go to Login</Text>
@@ -151,7 +151,7 @@ export default function Profile() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color="#800080" />
         </TouchableOpacity>
-        
+
         {/* Warning alert component */}
         {warning && (
           <View style={[ButtonStyles.warning, { margin: 10 }]}>
@@ -214,15 +214,15 @@ export default function Profile() {
           <View style={styles.buttonSection}>
             {isEditing ? (
               <View style={styles.editButtonsRow}>
-                <TouchableOpacity 
-                  style={[styles.cancelButton, saving && styles.buttonDisabled]} 
+                <TouchableOpacity
+                  style={[styles.cancelButton, saving && styles.buttonDisabled]}
                   onPress={handleCancel}
                   disabled={saving}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.saveButton, saving && styles.buttonDisabled]} 
+                <TouchableOpacity
+                  style={[styles.saveButton, saving && styles.buttonDisabled]}
                   onPress={handleSave}
                   disabled={saving}
                 >
@@ -240,13 +240,31 @@ export default function Profile() {
           </View>
 
           <View style={styles.optionsSection}>
-            <TouchableOpacity style={styles.optionButton} onPress={() => router.push("/forgot-password")}>
+            {/* My Orders button */}
+            <TouchableOpacity
+              style={styles.optionButton}
+              onPress={() => router.push("/myorders")}
+            >
+              <Ionicons name="bag-outline" size={24} color="#800080" />
+              <Text style={styles.optionText}>My Orders</Text>
+              <Ionicons name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
+
+            {/* Change Password button */}
+            <TouchableOpacity
+              style={styles.optionButton}
+              onPress={() => router.push("/forgot-password")}
+            >
               <Ionicons name="key-outline" size={24} color="#800080" />
               <Text style={styles.optionText}>Change Password</Text>
               <Ionicons name="chevron-forward" size={20} color="#ccc" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.optionButton, styles.logoutButton]} onPress={handleLogout}>
+            {/* Logout button */}
+            <TouchableOpacity
+              style={[styles.optionButton, styles.logoutButton]}
+              onPress={handleLogout}
+            >
               <Ionicons name="log-out-outline" size={24} color="#ff4444" />
               <Text style={[styles.optionText, styles.logoutText]}>Logout</Text>
               <Ionicons name="chevron-forward" size={20} color="#ccc" />

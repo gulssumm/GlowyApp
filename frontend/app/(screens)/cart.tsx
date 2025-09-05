@@ -226,7 +226,7 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
         </View>
         <TouchableOpacity
           style={styles.removeButton}
-          onPress={() => removeItem(item.id, name)}
+          onPress={() => removeItem(item.jewelleryId, name)}
         >
           <Ionicons name="trash-outline" size={18} color="#ff4444" />
         </TouchableOpacity>
