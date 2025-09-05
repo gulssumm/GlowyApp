@@ -389,6 +389,7 @@ export default function CheckoutScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Street Address"
+                  placeholderTextColor={"#666"}
                   value={addressForm.street}
                   onChangeText={(text) => setAddressForm({ ...addressForm, street: text })}
                 />
@@ -396,12 +397,14 @@ export default function CheckoutScreen() {
                   <TextInput
                     style={[styles.input, styles.halfInput]}
                     placeholder="City"
+                    placeholderTextColor={"#666"}
                     value={addressForm.city}
                     onChangeText={(text) => setAddressForm({ ...addressForm, city: text })}
                   />
                   <TextInput
                     style={[styles.input, styles.halfInput]}
                     placeholder="State"
+                    placeholderTextColor={"#666"}
                     value={addressForm.state}
                     onChangeText={(text) => setAddressForm({ ...addressForm, state: text })}
                   />
@@ -411,12 +414,14 @@ export default function CheckoutScreen() {
                     style={[styles.input, styles.halfInput]}
                     placeholder="Postal Code"
                     value={addressForm.postalCode}
+                    placeholderTextColor={"#666"}
                     onChangeText={(text) => setAddressForm({ ...addressForm, postalCode: text })}
                   />
                   <TextInput
                     style={[styles.input, styles.halfInput]}
                     placeholder="Country"
                     value={addressForm.country}
+                    placeholderTextColor={"#666"}
                     onChangeText={(text) => setAddressForm({ ...addressForm, country: text })}
                   />
                 </View>

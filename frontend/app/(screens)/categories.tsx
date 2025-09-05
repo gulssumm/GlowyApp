@@ -220,13 +220,14 @@ export default function CategoriesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#800080" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Categories</Text>
-        <TouchableOpacity onPress={() => router.push('/cart')}>
+        <View style={styles.placeholder} />
+        {/*<TouchableOpacity onPress={() => router.push('/cart')}>
           <Ionicons name="bag-outline" size={24} color="#800080" />
-        </TouchableOpacity>
+        </TouchableOpacity>*/}
       </View>
 
       {/* Category Tabs */}
@@ -284,6 +285,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+  },
+  backButton: {
+    width: 24, // Same as the icon size
+  },
+  placeholder: {
+    width: 24, // To balance the header
   },
   categoryTabsContainer: {
     backgroundColor: "#f8f4ff",
@@ -327,7 +337,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   productCard: {
-    flex: 1,
+    //flex: 1,
+    width: '48%',
     backgroundColor: "#fff",
     borderRadius: 15,
     marginBottom: 15,
