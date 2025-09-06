@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Animated,
   FlatList,
-  Image,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -16,12 +15,20 @@ import {
 import { addToFavorites, addToCart as apiAddToCart, logoutUser as apiLogoutUser, getAllJewelries, getBatchFavoriteStatus, getCart, removeFromFavorites } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { ButtonStyles } from "../../styles/buttons";
-import { headerStyles, commonColors, jewelryCardStyles, productCardStyles } from "../../styles/commonStyles";
+import { headerStyles, commonColors, commonSpacing } from "../../styles/commonStyles";
+import { ProductCard } from "../../components/ProductCard";
+import { Jewellery, FavoriteStatus } from "../../types";
 
-interface Jewellery { id: number; name: string; description: string; price: number; imageUrl: string; }
-interface MenuItem { id: string; title: string; icon: string; action: () => void; color?: string; dividerAfter?: boolean; }
+interface MenuItem { 
+  id: string; 
+  title: string; 
+  icon: string; 
+  action: () => void; 
+  color?: string; 
+  dividerAfter?: boolean; 
+}
 
-// Custom Alert Component
+// Custom Alert Component 
 interface CustomAlertProps {
   visible: boolean;
   title: string;
@@ -33,9 +40,6 @@ interface CustomAlertProps {
   }>;
   onClose: () => void;
   icon?: string;
-}
-interface FavoriteStatus {
-  [key: number]: boolean;
 }
 
 const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, buttons, onClose, icon }) => {
@@ -69,7 +73,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, butt
             <Ionicons
               name={icon as any}
               size={50}
-              color="#800080"
+              color={commonColors.primary}
               style={ButtonStyles.alertIcon}
             />
           )}
@@ -121,6 +125,29 @@ const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, butt
   );
 };
 
+// Main Screen Header Component (different from other screens)
+const MainScreenHeader = ({ 
+  onMenuPress, 
+  title 
+}: {
+  onMenuPress: () => void;
+  title: string;
+}) => (
+  <View style={headerStyles.container}>
+    <View style={headerStyles.leftSection}>
+      <TouchableOpacity style={headerStyles.backButton} onPress={onMenuPress}>
+        <Ionicons name="menu" size={28} color={commonColors.primary} />
+      </TouchableOpacity>
+    </View>
+    <View style={headerStyles.centerSection}>
+      <Text style={[headerStyles.title, { fontSize: 24 }]}>{title}</Text>
+    </View>
+    <View style={headerStyles.rightSection}>
+      {/* Empty for balanced layout */}
+    </View>
+  </View>
+);
+
 export default function MainScreen() {
   const router = useRouter();
   const { user: currentUser, isLoggedIn, logout, loading } = useAuth();
@@ -150,7 +177,6 @@ export default function MainScreen() {
     buttons: [],
   });
 
-  // Custom Alert Helper Function
   const showCustomAlert = (
     title: string,
     message: string,
@@ -161,20 +187,13 @@ export default function MainScreen() {
     }>,
     icon?: string
   ) => {
-    setCustomAlert({
-      visible: true,
-      title,
-      message,
-      buttons,
-      icon,
-    });
+    setCustomAlert({ visible: true, title, message, buttons, icon });
   };
 
   const hideCustomAlert = () => {
     setCustomAlert(prev => ({ ...prev, visible: false }));
   };
 
-  // Fetch cart count when component mounts and when user logs in
   const fetchCartCount = async () => {
     if (!isLoggedIn) {
       setCartCount(0);
@@ -196,16 +215,9 @@ export default function MainScreen() {
   useEffect(() => {
     const fetchJewelries = async () => {
       try {
-        console.log('Starting to fetch jewelries...');
         const data = await getAllJewelries();
-        console.log('Fetched jewelries data:', data);
-        console.log('Number of items:', data?.length || 0);
-
         if (data && Array.isArray(data)) {
           setJewelries(data);
-          console.log('Successfully set jewelries state');
-        } else {
-          console.log('Data is not an array:', typeof data, data);
         }
       } catch (error) {
         console.error("Failed to fetch jewelries:", error);
@@ -220,10 +232,6 @@ export default function MainScreen() {
 
     fetchJewelries();
   }, []);
-
-  console.log('Current jewelries state:', jewelries);
-  console.log('Jewelries length:', jewelries.length);
-  console.log('Current cart count:', cartCount);
 
   const toggleMenu = () => {
     if (menuVisible) {
@@ -309,14 +317,14 @@ export default function MainScreen() {
         { id: 'profile', title: 'Profile', icon: 'person', action: () => handleNavigation('/profile') },
         { id: 'settings', title: 'Settings', icon: 'settings', action: () => handleComingSoon('Settings') },
         { id: 'support', title: 'Help & Support', icon: 'help-circle', action: () => handleComingSoon('Help & Support'), dividerAfter: true },
-        { id: 'logout', title: 'Logout', icon: 'log-out', action: handleLogout, color: '#ff4444' },
+        { id: 'logout', title: 'Logout', icon: 'log-out', action: handleLogout, color: commonColors.error },
       ];
     }
 
     return [
       ...commonItems,
       { id: 'support', title: 'Help & Support', icon: 'help-circle', action: () => handleComingSoon('Help & Support'), dividerAfter: true },
-      { id: 'login', title: 'Sign In / Register', icon: 'log-in', action: () => handleNavigation('/login'), color: '#800080' },
+      { id: 'login', title: 'Sign In / Register', icon: 'log-in', action: () => handleNavigation('/login'), color: commonColors.primary },
     ];
   };
 
@@ -372,9 +380,7 @@ export default function MainScreen() {
     ];
   };
 
-  // Add to cart function
   const addToCart = async (item: Jewellery) => {
-    // 1. Check if user is logged in
     if (!isLoggedIn) {
       showCustomAlert(
         "Login Required",
@@ -388,17 +394,11 @@ export default function MainScreen() {
       return;
     }
 
-    // Show loading state
     setAddingToCart(item.id);
 
     try {
-      // 2. Call the real API
       await apiAddToCart(item.id, 1);
-
-      // 3. Update cart count
       setCartCount(prev => prev + 1);
-
-      // 4. Show success message with option to view
       showCustomAlert(
         "Added to Cart",
         `${item.name} has been added to your cart!`,
@@ -410,8 +410,6 @@ export default function MainScreen() {
       );
     } catch (error: any) {
       console.error("Failed to add to cart:", error);
-
-      // Handle specific error cases
       if (error.response?.status === 401) {
         showCustomAlert(
           "Session Expired",
@@ -428,130 +426,12 @@ export default function MainScreen() {
         );
       }
     } finally {
-      // Clear loading state
       setAddingToCart(null);
     }
   };
 
-  const renderJewelryCard = ({ item }: { item: Jewellery }) => {
-    const isFavorited = favoriteStatuses[item.id] || false;
-    const isTogglingThis = togglingFavorite === item.id;
-
-    return (
-      <TouchableOpacity
-        style={productCardStyles.gridCard}
-        onPress={() => router.push(`/product-detail?id=${item.id}`)}
-      >
-        <View style={productCardStyles.imageContainer}>
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={productCardStyles.gridImage}
-          />
-          <TouchableOpacity
-            style={[
-              jewelryCardStyles.favoriteButton,
-              isTogglingThis && { opacity: 0.7 }
-            ]}
-            onPress={(e) => toggleFavorite(item, e)}
-            disabled={isTogglingThis}
-          >
-            <Ionicons
-              name={
-                isTogglingThis
-                  ? "time-outline"
-                  : isFavorited
-                    ? "heart"
-                    : "heart-outline"
-              }
-              size={20}
-              color={isFavorited ? commonColors.error : commonColors.text.secondary}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={jewelryCardStyles.info}>
-          <Text style={jewelryCardStyles.name}>{item.name}</Text>
-          <Text style={jewelryCardStyles.price}>
-            ${item.price.toLocaleString()}
-          </Text>
-          <TouchableOpacity
-            style={[
-              jewelryCardStyles.addToCartButton,
-              addingToCart === item.id && { opacity: 0.7 }
-            ]}
-            onPress={(e) => {
-              e.stopPropagation();
-              addToCart(item);
-            }}
-            disabled={addingToCart === item.id}
-          >
-            <Ionicons
-              name={addingToCart === item.id ? "time-outline" : "bag-add"}
-              size={20}
-              color={commonColors.text.white}
-            />
-            <Text style={jewelryCardStyles.addToCartText}>
-              {addingToCart === item.id ? "Adding..." : "Add to Cart"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderMenuItem = (item: MenuItem) => (
-    <View key={item.id}>
-      <TouchableOpacity style={styles.menuItem} onPress={item.action}>
-        <Ionicons name={item.icon as any} size={24} color={item.color || "#666"} />
-        <Text style={[styles.menuItemText, item.color && { color: item.color }]}>{item.title}</Text>
-      </TouchableOpacity>
-      {item.dividerAfter && <View style={styles.menuDivider} />}
-    </View>
-  );
-
-  const renderBottomNavButton = (button: any) => (
-    <TouchableOpacity
-      key={button.id}
-      style={styles.bottomNavButton}
-      onPress={button.action}
-    >
-      <View style={button.id === 'cart' ? styles.cartButton : {}}>
-        <Ionicons
-          name={button.isActive ? button.icon : `${button.icon}-outline`}
-          size={24}
-          color={button.isActive ? "#800080" : "#666"}
-        />
-        {button.id === 'cart' && cartCount > 0 && (
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{cartCount}</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
-
-  // Fetch favorite statuses when jewelries or login state changes
-  const fetchFavoriteStatuses = async () => {
-    if (!isLoggedIn || jewelries.length === 0) {
-      setFavoriteStatuses({});
-      return;
-    }
-
-    try {
-      const jewelryIds = jewelries.map(item => item.id);
-      const statuses = await getBatchFavoriteStatus(jewelryIds);
-      setFavoriteStatuses(statuses);
-    } catch (error) {
-      console.error("Failed to fetch favorite statuses:", error);
-    }
-  };
-  useEffect(() => {
-    fetchFavoriteStatuses();
-  }, [isLoggedIn, jewelries]);
-
-  // Add this function to handle favorite toggle
   const toggleFavorite = async (item: Jewellery, event: any) => {
-    event.stopPropagation(); // Prevent navigation when clicking heart
+    event.stopPropagation();
 
     if (!isLoggedIn) {
       showCustomAlert(
@@ -594,7 +474,6 @@ export default function MainScreen() {
       }
     } catch (error: any) {
       console.error("Failed to toggle favorite:", error);
-
       if (error.response?.status === 401) {
         showCustomAlert(
           "Session Expired",
@@ -615,17 +494,77 @@ export default function MainScreen() {
     }
   };
 
+  const fetchFavoriteStatuses = async () => {
+    if (!isLoggedIn || jewelries.length === 0) {
+      setFavoriteStatuses({});
+      return;
+    }
+
+    try {
+      const jewelryIds = jewelries.map(item => item.id);
+      const statuses = await getBatchFavoriteStatus(jewelryIds);
+      setFavoriteStatuses(statuses);
+    } catch (error) {
+      console.error("Failed to fetch favorite statuses:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFavoriteStatuses();
+  }, [isLoggedIn, jewelries]);
+
+  const renderJewelryCard = ({ item }: { item: Jewellery }) => (
+    <ProductCard
+      item={item}
+      isFavorited={favoriteStatuses[item.id] || false}
+      isTogglingFavorite={togglingFavorite === item.id}
+      isAddingToCart={addingToCart === item.id}
+      onToggleFavorite={toggleFavorite}
+      onAddToCart={(item, e) => {
+        e.stopPropagation();
+        addToCart(item);
+      }}
+    />
+  );
+
+  const renderMenuItem = (item: MenuItem) => (
+    <View key={item.id}>
+      <TouchableOpacity style={styles.menuItem} onPress={item.action}>
+        <Ionicons name={item.icon as any} size={24} color={item.color || commonColors.text.secondary} />
+        <Text style={[styles.menuItemText, item.color && { color: item.color }]}>{item.title}</Text>
+      </TouchableOpacity>
+      {item.dividerAfter && <View style={styles.menuDivider} />}
+    </View>
+  );
+
+  const renderBottomNavButton = (button: any) => (
+    <TouchableOpacity
+      key={button.id}
+      style={styles.bottomNavButton}
+      onPress={button.action}
+    >
+      <View style={button.id === 'cart' ? styles.cartButton : {}}>
+        <Ionicons
+          name={button.isActive ? button.icon : `${button.icon}-outline`}
+          size={24}
+          color={button.isActive ? commonColors.primary : commonColors.text.secondary}
+        />
+        {button.id === 'cart' && cartCount > 0 && (
+          <View style={styles.cartBadge}>
+            <Text style={styles.cartBadgeText}>{cartCount}</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={headerStyles.container}>
-        <TouchableOpacity style={headerStyles.menuButton} onPress={toggleMenu}>
-          <Ionicons name="menu" size={28} color={commonColors.primary} />
-        </TouchableOpacity>
-        <Text style={headerStyles.title}>Glowy ✨</Text>
-      </View>
+      <MainScreenHeader
+        onMenuPress={toggleMenu}
+        title="Glowy ✨"
+      />
 
-      {/* Content with bottom padding to avoid overlap with bottom nav */}
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
@@ -644,8 +583,8 @@ export default function MainScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {['Rings', 'Necklaces', 'Earrings', 'Bracelets'].map(cat => (
               <TouchableOpacity key={cat} style={styles.categoryCard} onPress={() => router.push(`/categories?category=${cat}`)}>
-                <Ionicons name="diamond" size={30} color="#800080" />
-                <Text style={styles.categoryText}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</Text>
+                <Ionicons name="diamond" size={30} color={commonColors.primary} />
+                <Text style={styles.categoryText}>{cat}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -685,7 +624,7 @@ export default function MainScreen() {
                 )}
               </View>
               <TouchableOpacity onPress={toggleMenu} style={styles.closeButton}>
-                <Ionicons name="close" size={28} color="#800080" />
+                <Ionicons name="close" size={28} color={commonColors.primary} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.menuItems}>
@@ -698,7 +637,6 @@ export default function MainScreen() {
         </View>
       </Modal>
 
-      {/* Custom Alert */}
       <CustomAlert
         visible={customAlert.visible}
         title={customAlert.title}
@@ -714,7 +652,7 @@ export default function MainScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: commonColors.background,
   },
   cartButton: {
     position: "relative",
@@ -724,7 +662,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -5,
     right: -5,
-    backgroundColor: "#ff4444",
+    backgroundColor: commonColors.error,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -732,7 +670,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cartBadgeText: {
-    color: "#fff",
+    color: commonColors.text.white,
     fontSize: 12,
     fontWeight: "bold",
   },
@@ -743,67 +681,66 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   heroSection: {
-    padding: 20,
+    padding: commonSpacing.l,
     alignItems: "center",
     backgroundColor: "#f8f4ff",
   },
   heroTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#800080",
+    color: commonColors.primary,
     textAlign: "center",
     marginBottom: 8,
   },
   heroSubtitle: {
     fontSize: 16,
-    color: "#666",
+    color: commonColors.text.secondary,
     textAlign: "center",
     marginBottom: 20,
   },
   heroButton: {
-    backgroundColor: "#800080",
+    backgroundColor: commonColors.primary,
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
   },
   heroButtonText: {
-    color: "#fff",
+    color: commonColors.text.white,
     fontSize: 16,
     fontWeight: "bold",
   },
   categoriesSection: {
-    padding: 20,
+    padding: commonSpacing.l,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 15,
+    color: commonColors.text.primary,
+    marginBottom: commonSpacing.m,
   },
   categoryCard: {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#f8f4ff",
     borderRadius: 15,
-    padding: 15,
-    marginRight: 15,
+    padding: commonSpacing.m,
+    marginRight: commonSpacing.m,
     minWidth: 80,
   },
   categoryText: {
     marginTop: 8,
     fontSize: 12,
-    color: "#666",
+    color: commonColors.text.secondary,
     fontWeight: "500",
   },
   productsSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: commonSpacing.l,
+    paddingVertical: commonSpacing.l,
   },
   productRow: {
     justifyContent: "space-between",
     paddingHorizontal: 5,
   },
-  // Alert Button Container for multiple buttons
   alertButtonContainer: {
     flexDirection: 'row',
     paddingHorizontal: 15,
@@ -811,26 +748,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 15,
   },
-  // Bottom Navigation Styles
   bottomNavContainer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     height: 80,
-    backgroundColor: "#fff",
+    backgroundColor: commonColors.background,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: commonSpacing.l,
+    paddingBottom: commonSpacing.l,
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
+    borderTopColor: commonColors.border,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 10,
@@ -843,7 +776,6 @@ const styles = StyleSheet.create({
     minWidth: 50,
     minHeight: 50,
   },
-  // Side Menu Styles
   menuOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -852,16 +784,13 @@ const styles = StyleSheet.create({
   sideMenu: {
     width: 300,
     height: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: commonColors.background,
     paddingTop: 50,
     position: "absolute",
     left: 0,
     top: 0,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 0,
-    },
+    shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -870,10 +799,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: commonSpacing.l,
+    paddingBottom: commonSpacing.l,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: commonColors.border,
   },
   menuTitleContainer: {
     flex: 1,
@@ -881,7 +810,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#800080",
+    color: commonColors.primary,
   },
   menuSubtitle: {
     fontSize: 14,

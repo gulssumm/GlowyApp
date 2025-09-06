@@ -13,7 +13,12 @@ import {
 } from "react-native";
 import { addToCart as apiAddToCart, getFavorites, removeFromFavorites } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-import { productCardStyles, commonColors, jewelryCardStyles } from "../../styles/commonStyles";
+import { 
+  productCardStyles, 
+  commonColors, 
+  jewelryCardStyles, 
+  headerStyles 
+} from "../../styles/commonStyles";
 
 interface FavoriteItem {
   id: number;
@@ -26,6 +31,35 @@ interface FavoriteItem {
     imageUrl: string;
   };
 }
+
+// Reusable Header Component
+const ScreenHeader = ({ 
+  onBackPress, 
+  title, 
+  rightAction 
+}: {
+  onBackPress: () => void;
+  title: string;
+  rightAction?: { onPress: () => void; text: string } | null;
+}) => (
+  <View style={headerStyles.container}>
+    <View style={headerStyles.leftSection}>
+      <TouchableOpacity style={headerStyles.backButton} onPress={onBackPress}>
+        <Ionicons name="arrow-back" size={24} color={commonColors.primary} />
+      </TouchableOpacity>
+    </View>
+    <View style={headerStyles.centerSection}>
+      <Text style={headerStyles.title}>{title}</Text>
+    </View>
+    <View style={headerStyles.rightSection}>
+      {rightAction ? (
+        <TouchableOpacity onPress={rightAction.onPress}>
+          <Text style={headerStyles.rightButtonText}>{rightAction.text}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  </View>
+);
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -65,7 +99,7 @@ export default function FavoritesScreen() {
   };
 
   const handleRemoveFromFavorites = async (jewelryId: number, event: any) => {
-    event.stopPropagation(); // Prevent navigation when removing from favorites
+    event.stopPropagation();
     setRemovingFavorite(jewelryId);
     try {
       await removeFromFavorites(jewelryId);
@@ -78,11 +112,10 @@ export default function FavoritesScreen() {
   };
 
   const handleAddToCart = async (jewelry: FavoriteItem['jewellery'], event: any) => {
-    event.stopPropagation(); // Prevent navigation when adding to cart
+    event.stopPropagation();
     setAddingToCart(jewelry.id);
     try {
       await apiAddToCart(jewelry.id, 1);
-      // Could show success message here
     } catch (error) {
       console.error("Failed to add to cart:", error);
     } finally {
@@ -109,11 +142,7 @@ export default function FavoritesScreen() {
           disabled={removingFavorite === item.jewellery.id}
         >
           <Ionicons
-            name={
-              removingFavorite === item.jewellery.id
-                ? "time-outline"
-                : "heart"
-            }
+            name={removingFavorite === item.jewellery.id ? "time-outline" : "heart"}
             size={20}
             color={commonColors.error}
           />
@@ -125,7 +154,6 @@ export default function FavoritesScreen() {
           ${item.jewellery.price.toLocaleString()}
         </Text>
         
-        {/* Action Buttons */}
         <View style={productCardStyles.actionButtons}>
           <TouchableOpacity
             style={[
@@ -190,13 +218,10 @@ export default function FavoritesScreen() {
   if (!isLoggedIn) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#800080" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Favorites</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <ScreenHeader
+          onBackPress={() => router.back()}
+          title="Favorites"
+        />
         {renderEmptyState()}
       </SafeAreaView>
     );
@@ -204,13 +229,10 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#800080" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Favorites ({favorites.length})</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <ScreenHeader
+        onBackPress={() => router.back()}
+        title={`Favorites (${favorites.length})`}
+      />
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -220,7 +242,7 @@ export default function FavoritesScreen() {
         renderEmptyState()
       ) : (
         <FlatList
-          key="favorites-grid" // Forces consistent rendering
+          key="favorites-grid"
           data={favorites}
           renderItem={renderFavoriteItem}
           keyExtractor={(item) => item.id.toString()}
@@ -240,21 +262,7 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
+    backgroundColor: commonColors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -268,11 +276,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 5,
   },
-  addedDate: {
-    fontSize: 10,
-    color: "#999",
-    marginBottom: 8,
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
@@ -282,25 +285,25 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#333",
+    color: commonColors.text.primary,
     marginTop: 20,
     marginBottom: 10,
   },
   emptySubtitle: {
     fontSize: 16,
-    color: "#666",
+    color: commonColors.text.secondary,
     textAlign: "center",
     marginBottom: 30,
     lineHeight: 24,
   },
   browseButton: {
-    backgroundColor: "#800080",
+    backgroundColor: commonColors.primary,
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
   },
   browseButtonText: {
-    color: "#fff",
+    color: commonColors.text.white,
     fontSize: 16,
     fontWeight: "bold",
   },

@@ -52,13 +52,55 @@ export const headerStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: commonColors.border,
   },
-  menuButton: {
+  // Left section (back button)
+  leftSection: {
+    width: 40,
+    alignItems: 'flex-start',
+  },
+  backButton: {
     padding: commonSpacing.xs,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Center section (title)
+  centerSection: {
+    flex: 1,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    color: commonColors.primary,
+    color: commonColors.text.primary,
+    textAlign: 'center',
+  },
+  titleWithCount: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: commonColors.text.primary,
+    textAlign: 'center',
+  },
+  // Right section (settings button)
+  rightSection: {
+    width: 40,
+    alignItems: 'flex-end',
+  },
+  rightButton: {
+    padding: commonSpacing.xs,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rightButtonText: {
+    color: commonColors.error,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Placeholder for balanced layout
+  placeholder: {
+    width: 40,
   }
 });
 

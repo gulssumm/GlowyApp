@@ -15,13 +15,13 @@ import {
 } from "react-native";
 import { clearCart, getCart, removeFromCart, updateCartItem } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { headerStyles, commonColors, commonSpacing } from "../../styles/commonStyles";
 
 interface CartItem {
   id: number;
   jewelleryId: number;
   quantity: number;
   addedAt: string;
-  // Direct properties (flattened from jewelry)
   name: string;
   description: string;
   price: number;
@@ -34,6 +34,35 @@ interface CartData {
   totalItems: number;
   totalAmount: number;
 }
+
+// Reusable Header Component
+const ScreenHeader = ({ 
+  onBackPress, 
+  title, 
+  rightAction 
+}: {
+  onBackPress: () => void;
+  title: string;
+  rightAction?: { onPress: () => void; text: string } | null;
+}) => (
+  <View style={headerStyles.container}>
+    <View style={headerStyles.leftSection}>
+      <TouchableOpacity style={headerStyles.backButton} onPress={onBackPress}>
+        <Ionicons name="chevron-back" size={28} color={commonColors.primary} />
+      </TouchableOpacity>
+    </View>
+    <View style={headerStyles.centerSection}>
+      <Text style={headerStyles.title}>{title}</Text>
+    </View>
+    <View style={headerStyles.rightSection}>
+      {rightAction ? (
+        <TouchableOpacity onPress={rightAction.onPress}>
+          <Text style={headerStyles.rightButtonText}>{rightAction.text}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  </View>
+);
 
 export default function CartScreen() {
   const router = useRouter();
@@ -49,20 +78,12 @@ export default function CartScreen() {
       return;
     }
 
-  try {
+    try {
       const data = await getCart();
-      
-      console.log("Cart data received:", JSON.stringify(data, null, 2));
-      // Debug: Log the structure of cart items
-      if (data?.items?.length > 0) {
-        console.log("First cart item structure:", JSON.stringify(data.items[0], null, 2));
-      }
-
       setCartData(data);
     } catch (error: any) {
       console.error("Error fetching cart:", error);
       if (error.response?.status === 401) {
-        // Token expired or invalid
         Alert.alert("Session Expired", "Please log in again");
         router.replace("/login");
       }
@@ -90,7 +111,7 @@ export default function CartScreen() {
 
     try {
       await updateCartItem(jewelleryId, newQuantity);
-      await fetchCart(); // Refresh cart data
+      await fetchCart();
     } catch (error: any) {
       console.error("Error updating quantity:", error);
       Alert.alert("Error", "Failed to update item quantity");
@@ -109,7 +130,7 @@ export default function CartScreen() {
           onPress: async () => {
             try {
               await removeFromCart(jewelleryId);
-              await fetchCart(); // Refresh cart data
+              await fetchCart();
             } catch (error: any) {
               console.error("Error removing item:", error);
               Alert.alert("Error", "Failed to remove item from cart");
@@ -134,7 +155,7 @@ export default function CartScreen() {
           onPress: async () => {
             try {
               await clearCart();
-              await fetchCart(); // Refresh cart data
+              await fetchCart();
             } catch (error: any) {
               console.error("Error clearing cart:", error);
               Alert.alert("Error", "Failed to clear cart");
@@ -152,10 +173,7 @@ export default function CartScreen() {
         "Please log in to proceed with checkout.",
         [
           { text: "Cancel", style: "cancel" },
-          {
-            text: "Login",
-            onPress: () => router.push("/login"),
-          },
+          { text: "Login", onPress: () => router.push("/login") },
         ]
       );
       return;
@@ -166,41 +184,25 @@ export default function CartScreen() {
       return;
     }
 
-    // Navigate to checkout screen
     router.push('/checkout');
   };
 
-const renderCartItem = ({ item }: { item: CartItem }) => {
-  const imageUrl = item.imageUrl;
-  const name = item.name;
-  const description = item.description;
-  const price = item.price;
-    
-  console.log(`Rendering item: ${name}, Image URL: ${imageUrl}`);
-    
-  return (
+  const renderCartItem = ({ item }: { item: CartItem }) => (
     <TouchableOpacity 
       style={styles.cartItemContainer} 
       onPress={() => router.push(`/product-detail?id=${item.jewelleryId}`)} 
     >
       <View style={styles.imageContainer}>
         <Image 
-          source={{ uri: imageUrl }} 
+          source={{ uri: item.imageUrl }} 
           style={styles.itemImage}
-          onError={(e) => {
-            console.log(`Image failed to load for ${name}:`, e.nativeEvent.error);
-            console.log(`Failed URL: ${imageUrl}`);
-          }}
-          onLoad={() => {
-            console.log(`Image loaded successfully for ${name}`);
-          }}
         />
       </View>
       <View style={styles.itemDetails}>
-        <Text style={styles.itemName}>{name}</Text>
-        <Text style={styles.itemDescription}>{description}</Text>
+        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={styles.itemDescription}>{item.description}</Text>
         <View style={styles.priceRow}>
-          <Text style={styles.itemPrice}>${price.toLocaleString()}</Text>
+          <Text style={styles.itemPrice}>${item.price.toLocaleString()}</Text>
         </View>
       </View>
       <View style={styles.quantityControls}>
@@ -213,7 +215,7 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
             <Ionicons
               name="remove"
               size={16}
-              color={item.quantity <= 1 ? "#ccc" : "#800080"}
+              color={item.quantity <= 1 ? "#ccc" : commonColors.primary}
             />
           </TouchableOpacity>
           <Text style={styles.quantityText}>{item.quantity}</Text>
@@ -221,19 +223,18 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
             style={styles.quantityButton}
             onPress={() => updateQuantity(item.jewelleryId, 1, item.quantity)}
           >
-            <Ionicons name="add" size={16} color="#800080" />
+            <Ionicons name="add" size={16} color={commonColors.primary} />
           </TouchableOpacity>
         </View>
         <TouchableOpacity
           style={styles.removeButton}
-          onPress={() => removeItem(item.jewelleryId, name)}
+          onPress={() => removeItem(item.jewelleryId, item.name)}
         >
-          <Ionicons name="trash-outline" size={18} color="#ff4444" />
+          <Ionicons name="trash-outline" size={18} color={commonColors.error} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
-};
 
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
@@ -243,8 +244,8 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
       </Text>
       <Text style={styles.emptyCartSubtitle}>
         {isLoggedIn
-        ? "Discover our beautiful jewelry collection and add items to your cart."
-        : "Log in to view your cart and save items for later."}
+          ? "Discover our beautiful jewelry collection and add items to your cart."
+          : "Log in to view your cart and save items for later."}
       </Text>
       <TouchableOpacity
         style={styles.shopNowButton}
@@ -257,51 +258,32 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
     </View>
   );
 
-  if(loading) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="chevron-back" size={28} color="#800080" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Shopping Cart</Text>
-        </View>
+        <ScreenHeader
+          onBackPress={() => router.back()}
+          title="Shopping Cart"
+        />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading cart...</Text>
         </View>
       </SafeAreaView>
-    )
+    );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={28} color="#800080" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Shopping Cart</Text>
-        {cartData?.items?.length ? (
-          <TouchableOpacity style={styles.clearButton} onPress={clearAllItems}>
-            <Text style={styles.clearButtonText}>Clear</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 60 }} />
-        )}
-      </View>
+      <ScreenHeader
+        onBackPress={() => router.back()}
+        title="Shopping Cart"
+        rightAction={cartData?.items?.length ? { onPress: clearAllItems, text: "Clear" } : null}
+      />
 
-      {/* Cart Content */}
       {!isLoggedIn || !cartData?.items?.length ? (
         renderEmptyCart()
       ) : (
         <>
-          {/* Cart Items List */}
           <FlatList
             data={cartData.items}
             keyExtractor={item => item.id.toString()}
@@ -313,7 +295,6 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
             }
           />
 
-          {/* Cart Summary */}
           <View style={styles.cartSummary}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
@@ -327,7 +308,7 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
               </Text>
             </View>
             <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
-              <Ionicons name="card-outline" size={20} color="#fff" />
+              <Ionicons name="card-outline" size={20} color={commonColors.text.white} />
               <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
             </TouchableOpacity>
           </View>
@@ -340,7 +321,7 @@ const renderCartItem = ({ item }: { item: CartItem }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: commonColors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -349,52 +330,20 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: "#666",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    flex: 1,
-    textAlign: "center",
-    marginRight: 40, // Compensate for clear button
-  },
-  clearButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  clearButtonText: {
-    color: "#ff4444",
-    fontSize: 16,
-    fontWeight: "600",
+    color: commonColors.text.secondary,
   },
   cartList: {
-    paddingHorizontal: 20,
+    paddingHorizontal: commonSpacing.l,
     paddingTop: 10,
   },
   cartItemContainer: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: commonColors.background,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    padding: commonSpacing.m,
+    marginBottom: commonSpacing.m,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -406,15 +355,15 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 8,
     overflow: "hidden",
-    marginRight: 15,
-    backgroundColor: "#f8f8f8", // Fallback background
+    marginRight: commonSpacing.m,
+    backgroundColor: "#f8f8f8",
   },
   itemImage: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    marginRight: 15,
-    resizeMode: "cover", // This will crop the image to fit properly
+    marginRight: commonSpacing.m,
+    resizeMode: "cover",
   },
   itemDetails: {
     flex: 1,
@@ -423,12 +372,12 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: commonColors.text.primary,
     marginBottom: 4,
   },
   itemDescription: {
     fontSize: 14,
-    color: "#666",
+    color: commonColors.text.secondary,
     marginBottom: 8,
     lineHeight: 18,
   },
@@ -441,7 +390,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#800080",
+    color: commonColors.primary,
   },
   quantityControls: {
     alignItems: "center",
@@ -461,14 +410,11 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#fff",
+    backgroundColor: commonColors.background,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
@@ -479,8 +425,8 @@ const styles = StyleSheet.create({
   quantityText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
-    marginHorizontal: 15,
+    color: commonColors.text.primary,
+    marginHorizontal: commonSpacing.m,
     minWidth: 20,
     textAlign: "center",
   },
@@ -491,9 +437,9 @@ const styles = StyleSheet.create({
   },
   cartSummary: {
     backgroundColor: "#f8f4ff",
-    padding: 20,
+    padding: commonSpacing.l,
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
+    borderTopColor: commonColors.border,
   },
   summaryRow: {
     flexDirection: "row",
@@ -503,38 +449,35 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 16,
-    color: "#666",
+    color: commonColors.text.secondary,
   },
   totalLabel: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: commonColors.text.primary,
   },
   totalAmount: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#800080",
+    color: commonColors.primary,
   },
   checkoutButton: {
-    backgroundColor: "#800080",
+    backgroundColor: commonColors.primary,
     borderRadius: 12,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: commonSpacing.m,
+    paddingHorizontal: commonSpacing.l,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 15,
-    shadowColor: "#800080",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    marginTop: commonSpacing.m,
+    shadowColor: commonColors.primary,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 5,
   },
   checkoutButtonText: {
-    color: "#fff",
+    color: commonColors.text.white,
     fontSize: 18,
     fontWeight: "bold",
     marginLeft: 8,
@@ -548,26 +491,26 @@ const styles = StyleSheet.create({
   emptyCartTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#333",
+    color: commonColors.text.primary,
     marginTop: 20,
     marginBottom: 10,
     textAlign: "center",
   },
   emptyCartSubtitle: {
     fontSize: 16,
-    color: "#666",
+    color: commonColors.text.secondary,
     textAlign: "center",
     lineHeight: 24,
     marginBottom: 30,
   },
   shopNowButton: {
-    backgroundColor: "#800080",
+    backgroundColor: commonColors.primary,
     borderRadius: 12,
-    paddingVertical: 15,
+    paddingVertical: commonSpacing.m,
     paddingHorizontal: 30,
   },
   shopNowButtonText: {
-    color: "#fff",
+    color: commonColors.text.white,
     fontSize: 16,
     fontWeight: "bold",
   },
