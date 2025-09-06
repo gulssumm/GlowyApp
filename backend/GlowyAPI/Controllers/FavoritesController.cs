@@ -101,9 +101,7 @@ namespace GlowyAPI.Controllers
 
                 if (existingFavorite != null)
                 {
-                    _context.Favorites.Remove(existingFavorite);
-                    await _context.SaveChangesAsync();
-                    return Ok(new { message = "Item removed from favorites successfully.", isFavorited = false });
+                    return Conflict(new { message = "Item already in favorites." });
                 }
 
                 var favorite = new Favorite
@@ -125,6 +123,38 @@ namespace GlowyAPI.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error adding to favorites: {ex.Message}");
+                return StatusCode(500, new { message = "Internal server error." });
+            }
+        }
+
+        [HttpDelete("{jewelleryId}")]
+        public async Task<IActionResult> RemoveFromFavorites(int jewelleryId)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                // Check if item is in favorites
+                var existingFavorite = await _context.Favorites
+                                             .FirstOrDefaultAsync(f => f.UserId == userId && f.JewelleryId == jewelleryId);
+
+                if (existingFavorite == null)
+                {
+                    return NotFound(new { message = "Item not found in favorites." });
+                }
+
+                _context.Favorites.Remove(existingFavorite);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Item removed from favorites successfully.", isFavorited = false });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error removing from favorites: {ex.Message}");
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }

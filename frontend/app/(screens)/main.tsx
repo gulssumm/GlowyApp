@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import { addToFavorites, addToCart as apiAddToCart, logoutUser as apiLogoutUser, getAllJewelries, getBatchFavoriteStatus, getCart, removeFromFavorites } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-import { ButtonStyles } from "../../styles/buttons"; 
-import { headerStyles, commonColors, jewelryCardStyles } from "../../styles/commonStyles";
+import { ButtonStyles } from "../../styles/buttons";
+import { headerStyles, commonColors, jewelryCardStyles, productCardStyles } from "../../styles/commonStyles";
 
 interface Jewellery { id: number; name: string; description: string; price: number; imageUrl: string; }
 interface MenuItem { id: string; title: string; icon: string; action: () => void; color?: string; dividerAfter?: boolean; }
@@ -66,10 +66,10 @@ const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, butt
       <View style={ButtonStyles.alertOverlay}>
         <View style={ButtonStyles.alertBox}>
           {icon && (
-            <Ionicons 
-              name={icon as any} 
-              size={50} 
-              color="#800080" 
+            <Ionicons
+              name={icon as any}
+              size={50}
+              color="#800080"
               style={ButtonStyles.alertIcon}
             />
           )}
@@ -79,10 +79,10 @@ const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, butt
           <Text style={ButtonStyles.alertMessage}>
             {message}
           </Text>
-          
+
           {buttons.length === 1 ? (
-            <TouchableOpacity 
-              style={ButtonStyles.alertButton} 
+            <TouchableOpacity
+              style={ButtonStyles.alertButton}
               onPress={() => {
                 buttons[0].onPress();
                 onClose();
@@ -131,7 +131,7 @@ export default function MainScreen() {
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const [favoriteStatuses, setFavoriteStatuses] = useState<FavoriteStatus>({});
   const [togglingFavorite, setTogglingFavorite] = useState<number | null>(null);
-  
+
   // Custom Alert State
   const [customAlert, setCustomAlert] = useState<{
     visible: boolean;
@@ -152,8 +152,8 @@ export default function MainScreen() {
 
   // Custom Alert Helper Function
   const showCustomAlert = (
-    title: string, 
-    message: string, 
+    title: string,
+    message: string,
     buttons: Array<{
       text: string;
       onPress: () => void;
@@ -200,7 +200,7 @@ export default function MainScreen() {
         const data = await getAllJewelries();
         console.log('Fetched jewelries data:', data);
         console.log('Number of items:', data?.length || 0);
-        
+
         if (data && Array.isArray(data)) {
           setJewelries(data);
           console.log('Successfully set jewelries state');
@@ -212,7 +212,7 @@ export default function MainScreen() {
         showCustomAlert(
           "Network Error",
           "Unable to load products. Please check your connection and try again.",
-          [{ text: "OK", onPress: () => {} }],
+          [{ text: "OK", onPress: () => { } }],
           "warning-outline"
         );
       }
@@ -251,7 +251,7 @@ export default function MainScreen() {
     showCustomAlert(
       "Coming Soon",
       `${feature} feature will be available soon!`,
-      [{ text: "OK", onPress: () => {} }],
+      [{ text: "OK", onPress: () => { } }],
       "time-outline"
     );
     setMenuVisible(false);
@@ -262,7 +262,7 @@ export default function MainScreen() {
       "Logout",
       "Are you sure you want to logout?",
       [
-        { text: "Cancel", onPress: () => {}, style: "cancel" },
+        { text: "Cancel", onPress: () => { }, style: "cancel" },
         {
           text: "Logout",
           style: "destructive",
@@ -275,7 +275,7 @@ export default function MainScreen() {
               showCustomAlert(
                 "Success",
                 "Logged out successfully!",
-                [{ text: "OK", onPress: () => {} }],
+                [{ text: "OK", onPress: () => { } }],
                 "checkmark-circle-outline"
               );
             } catch (error) {
@@ -283,7 +283,7 @@ export default function MainScreen() {
               showCustomAlert(
                 "Error",
                 "Failed to logout",
-                [{ text: "OK", onPress: () => {} }],
+                [{ text: "OK", onPress: () => { } }],
                 "warning-outline"
               );
             }
@@ -296,9 +296,9 @@ export default function MainScreen() {
 
   const getMenuItems = (): MenuItem[] => {
     const commonItems: MenuItem[] = [
-      { id: 'home', title: 'Home', icon: 'home', action: () => setMenuVisible(false)},
+      { id: 'home', title: 'Home', icon: 'home', action: () => setMenuVisible(false) },
       { id: 'products', title: 'All Products', icon: 'diamond', action: () => handleComingSoon('All Products') },
-      { id: 'categories', title: 'Categories', icon: 'grid', action: () => handleNavigation('/categories') , dividerAfter: true},
+      { id: 'categories', title: 'Categories', icon: 'grid', action: () => handleNavigation('/categories'), dividerAfter: true },
     ];
 
     if (isLoggedIn) {
@@ -337,7 +337,7 @@ export default function MainScreen() {
           "Login Required",
           "Please log in to see your favorites.",
           [
-            { text: "Cancel", onPress: () => {}, style: "cancel" },
+            { text: "Cancel", onPress: () => { }, style: "cancel" },
             { text: "Login", onPress: () => router.push('/login') }
           ],
           "heart-outline"
@@ -350,7 +350,7 @@ export default function MainScreen() {
           "Login Required",
           "Please log in to view your cart.",
           [
-            { text: "Cancel", onPress: () => {}, style: "cancel" },
+            { text: "Cancel", onPress: () => { }, style: "cancel" },
             { text: "Login", onPress: () => router.push('/cart') }
           ],
           "cart-outline"
@@ -363,7 +363,7 @@ export default function MainScreen() {
           "Login Required",
           "Please log in to see your profile.",
           [
-            { text: "Cancel", onPress: () => {}, style: "cancel" },
+            { text: "Cancel", onPress: () => { }, style: "cancel" },
             { text: "Login", onPress: () => router.push('/login') }
           ],
           "person-outline"
@@ -380,7 +380,7 @@ export default function MainScreen() {
         "Login Required",
         "Please log in to add items to your cart.",
         [
-          { text: "Cancel", onPress: () => {}, style: "cancel" },
+          { text: "Cancel", onPress: () => { }, style: "cancel" },
           { text: "Login", onPress: () => router.push('/login') }
         ],
         "bag-add-outline"
@@ -394,23 +394,23 @@ export default function MainScreen() {
     try {
       // 2. Call the real API
       await apiAddToCart(item.id, 1);
-      
+
       // 3. Update cart count
       setCartCount(prev => prev + 1);
-      
+
       // 4. Show success message with option to view
       showCustomAlert(
         "Added to Cart",
         `${item.name} has been added to your cart!`,
         [
-          { text: "Continue Shopping", onPress: () => {}, style: "cancel" },
+          { text: "Continue Shopping", onPress: () => { }, style: "cancel" },
           { text: "View Cart", onPress: () => router.push('/cart') }
         ],
         "checkmark-circle-outline"
       );
     } catch (error: any) {
       console.error("Failed to add to cart:", error);
-      
+
       // Handle specific error cases
       if (error.response?.status === 401) {
         showCustomAlert(
@@ -423,7 +423,7 @@ export default function MainScreen() {
         showCustomAlert(
           "Error",
           error.response?.data?.message || "Failed to add item to cart. Please try again.",
-          [{ text: "OK", onPress: () => {} }],
+          [{ text: "OK", onPress: () => { } }],
           "warning-outline"
         );
       }
@@ -434,70 +434,69 @@ export default function MainScreen() {
   };
 
   const renderJewelryCard = ({ item }: { item: Jewellery }) => {
-  const isFavorited = favoriteStatuses[item.id] || false;
-  const isTogglingThis = togglingFavorite === item.id;
-  
-  return (
-    <TouchableOpacity 
-      style={jewelryCardStyles.card} 
-      onPress={() => router.push(`/product-detail?id=${item.id}`)}
-    >
-      <View style={jewelryCardStyles.imageContainer}>
-        <Image 
-          source={{ uri: item.imageUrl }} 
-          style={jewelryCardStyles.image} 
-        />
-        <TouchableOpacity 
-          style={[
-            jewelryCardStyles.favoriteButton, 
-            isTogglingThis && { opacity: 0.7 }
-          ]}
-          onPress={(e) => toggleFavorite(item, e)}
-          disabled={isTogglingThis}
-        >
-          <Ionicons 
-            name={
-              isTogglingThis 
-                ? "time-outline" 
-                : isFavorited 
-                  ? "heart" 
-                  : "heart-outline"
-            } 
-            size={20} 
-            color={isFavorited ? commonColors.error : commonColors.text.secondary} 
+    const isFavorited = favoriteStatuses[item.id] || false;
+    const isTogglingThis = togglingFavorite === item.id;
+
+    return (
+      <TouchableOpacity
+        style={productCardStyles.gridCard}
+        onPress={() => router.push(`/product-detail?id=${item.id}`)}
+      >
+        <View style={productCardStyles.imageContainer}>
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={productCardStyles.gridImage}
           />
-        </TouchableOpacity>
-      </View>
-      <View style={jewelryCardStyles.info}>
-        <Text style={jewelryCardStyles.name}>{item.name}</Text>
-        <Text style={jewelryCardStyles.description}>{item.description}</Text>
-        <Text style={jewelryCardStyles.price}>
-          ${item.price.toLocaleString()}
-        </Text>
-        <TouchableOpacity 
-          style={[
-            jewelryCardStyles.addToCartButton, 
-            addingToCart === item.id && { opacity: 0.7 }
-          ]} 
-          onPress={(e) => {
-            e.stopPropagation();
-            addToCart(item);
-          }}
-          disabled={addingToCart === item.id}
-        >
-          <Ionicons 
-            name={addingToCart === item.id ? "time-outline" : "bag-add"} 
-            size={20} 
-            color={commonColors.text.white} 
-          />
-          <Text style={jewelryCardStyles.addToCartText}>
-            {addingToCart === item.id ? "Adding..." : "Add to Cart"}
+          <TouchableOpacity
+            style={[
+              jewelryCardStyles.favoriteButton,
+              isTogglingThis && { opacity: 0.7 }
+            ]}
+            onPress={(e) => toggleFavorite(item, e)}
+            disabled={isTogglingThis}
+          >
+            <Ionicons
+              name={
+                isTogglingThis
+                  ? "time-outline"
+                  : isFavorited
+                    ? "heart"
+                    : "heart-outline"
+              }
+              size={20}
+              color={isFavorited ? commonColors.error : commonColors.text.secondary}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={jewelryCardStyles.info}>
+          <Text style={jewelryCardStyles.name}>{item.name}</Text>
+          <Text style={jewelryCardStyles.price}>
+            ${item.price.toLocaleString()}
           </Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-};
+          <TouchableOpacity
+            style={[
+              jewelryCardStyles.addToCartButton,
+              addingToCart === item.id && { opacity: 0.7 }
+            ]}
+            onPress={(e) => {
+              e.stopPropagation();
+              addToCart(item);
+            }}
+            disabled={addingToCart === item.id}
+          >
+            <Ionicons
+              name={addingToCart === item.id ? "time-outline" : "bag-add"}
+              size={20}
+              color={commonColors.text.white}
+            />
+            <Text style={jewelryCardStyles.addToCartText}>
+              {addingToCart === item.id ? "Adding..." : "Add to Cart"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderMenuItem = (item: MenuItem) => (
     <View key={item.id}>
@@ -510,121 +509,121 @@ export default function MainScreen() {
   );
 
   const renderBottomNavButton = (button: any) => (
-  <TouchableOpacity
-    key={button.id}
-    style={styles.bottomNavButton}
-    onPress={button.action}
-  >
-    <View style={button.id === 'cart' ? styles.cartButton : {}}>
-      <Ionicons
-        name={button.isActive ? button.icon : `${button.icon}-outline`}
-        size={24}
-        color={button.isActive ? "#800080" : "#666"}
-      />
-      {button.id === 'cart' && cartCount > 0 && (
-        <View style={styles.cartBadge}>
-          <Text style={styles.cartBadgeText}>{cartCount}</Text>
-        </View>
-      )}
-    </View>
-  </TouchableOpacity>
-);
+    <TouchableOpacity
+      key={button.id}
+      style={styles.bottomNavButton}
+      onPress={button.action}
+    >
+      <View style={button.id === 'cart' ? styles.cartButton : {}}>
+        <Ionicons
+          name={button.isActive ? button.icon : `${button.icon}-outline`}
+          size={24}
+          color={button.isActive ? "#800080" : "#666"}
+        />
+        {button.id === 'cart' && cartCount > 0 && (
+          <View style={styles.cartBadge}>
+            <Text style={styles.cartBadgeText}>{cartCount}</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
 
   // Fetch favorite statuses when jewelries or login state changes
   const fetchFavoriteStatuses = async () => {
-  if (!isLoggedIn || jewelries.length === 0) {
-    setFavoriteStatuses({});
-    return;
-  }
+    if (!isLoggedIn || jewelries.length === 0) {
+      setFavoriteStatuses({});
+      return;
+    }
 
-  try {
-    const jewelryIds = jewelries.map(item => item.id);
-    const statuses = await getBatchFavoriteStatus(jewelryIds);
-    setFavoriteStatuses(statuses);
-  } catch (error) {
-    console.error("Failed to fetch favorite statuses:", error);
-  }
-};
-useEffect(() => {
-  fetchFavoriteStatuses();
-}, [isLoggedIn, jewelries]);
+    try {
+      const jewelryIds = jewelries.map(item => item.id);
+      const statuses = await getBatchFavoriteStatus(jewelryIds);
+      setFavoriteStatuses(statuses);
+    } catch (error) {
+      console.error("Failed to fetch favorite statuses:", error);
+    }
+  };
+  useEffect(() => {
+    fetchFavoriteStatuses();
+  }, [isLoggedIn, jewelries]);
 
-// Add this function to handle favorite toggle
-const toggleFavorite = async (item: Jewellery, event: any) => {
-  event.stopPropagation(); // Prevent navigation when clicking heart
-  
-  if (!isLoggedIn) {
-    showCustomAlert(
-      "Login Required",
-      "Please log in to add items to your favorites.",
-      [
-        { text: "Cancel", onPress: () => {}, style: "cancel" },
-        { text: "Login", onPress: () => router.push('/login') }
-      ],
-      "heart-outline"
-    );
-    return;
-  }
+  // Add this function to handle favorite toggle
+  const toggleFavorite = async (item: Jewellery, event: any) => {
+    event.stopPropagation(); // Prevent navigation when clicking heart
 
-  setTogglingFavorite(item.id);
-  const currentlyFavorited = favoriteStatuses[item.id] || false;
-
-  try {
-    if (currentlyFavorited) {
-      await removeFromFavorites(item.id);
-      setFavoriteStatuses(prev => ({ ...prev, [item.id]: false }));
+    if (!isLoggedIn) {
       showCustomAlert(
-        "Removed from Favorites",
-        `${item.name} has been removed from your favorites.`,
-        [{ text: "OK", onPress: () => {} }],
-        "heart-dislike-outline"
-      );
-    } else {
-      await addToFavorites(item.id);
-      setFavoriteStatuses(prev => ({ ...prev, [item.id]: true }));
-      showCustomAlert(
-        "Added to Favorites",
-        `${item.name} has been added to your favorites!`,
+        "Login Required",
+        "Please log in to add items to your favorites.",
         [
-          { text: "Continue Shopping", onPress: () => {}, style: "cancel" },
-          { text: "View Favorites", onPress: () => router.push('/favorites') }
+          { text: "Cancel", onPress: () => { }, style: "cancel" },
+          { text: "Login", onPress: () => router.push('/login') }
         ],
         "heart-outline"
       );
+      return;
     }
-  } catch (error: any) {
-    console.error("Failed to toggle favorite:", error);
-    
-    if (error.response?.status === 401) {
-      showCustomAlert(
-        "Session Expired",
-        "Please log in again.",
-        [{ text: "OK", onPress: () => router.push('/login') }],
-        "warning-outline"
-      );
-    } else {
-      showCustomAlert(
-        "Error",
-        error.message || "Failed to update favorites. Please try again.",
-        [{ text: "OK", onPress: () => {} }],
-        "warning-outline"
-      );
+
+    setTogglingFavorite(item.id);
+    const currentlyFavorited = favoriteStatuses[item.id] || false;
+
+    try {
+      if (currentlyFavorited) {
+        await removeFromFavorites(item.id);
+        setFavoriteStatuses(prev => ({ ...prev, [item.id]: false }));
+        showCustomAlert(
+          "Removed from Favorites",
+          `${item.name} has been removed from your favorites.`,
+          [{ text: "OK", onPress: () => { } }],
+          "heart-dislike-outline"
+        );
+      } else {
+        await addToFavorites(item.id);
+        setFavoriteStatuses(prev => ({ ...prev, [item.id]: true }));
+        showCustomAlert(
+          "Added to Favorites",
+          `${item.name} has been added to your favorites!`,
+          [
+            { text: "Continue Shopping", onPress: () => { }, style: "cancel" },
+            { text: "View Favorites", onPress: () => router.push('/favorites') }
+          ],
+          "heart-outline"
+        );
+      }
+    } catch (error: any) {
+      console.error("Failed to toggle favorite:", error);
+
+      if (error.response?.status === 401) {
+        showCustomAlert(
+          "Session Expired",
+          "Please log in again.",
+          [{ text: "OK", onPress: () => router.push('/login') }],
+          "warning-outline"
+        );
+      } else {
+        showCustomAlert(
+          "Error",
+          error.message || "Failed to update favorites. Please try again.",
+          [{ text: "OK", onPress: () => { } }],
+          "warning-outline"
+        );
+      }
+    } finally {
+      setTogglingFavorite(null);
     }
-  } finally {
-    setTogglingFavorite(null);
-  }
-};
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={headerStyles.container}>
-  <TouchableOpacity style={headerStyles.menuButton} onPress={toggleMenu}>
-    <Ionicons name="menu" size={28} color={commonColors.primary} />
-  </TouchableOpacity>
-  <Text style={headerStyles.title}>Glowy ✨</Text>
-</View>
+        <TouchableOpacity style={headerStyles.menuButton} onPress={toggleMenu}>
+          <Ionicons name="menu" size={28} color={commonColors.primary} />
+        </TouchableOpacity>
+        <Text style={headerStyles.title}>Glowy ✨</Text>
+      </View>
 
       {/* Content with bottom padding to avoid overlap with bottom nav */}
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -643,7 +642,7 @@ const toggleFavorite = async (item: Jewellery, event: any) => {
         <View style={styles.categoriesSection}>
           <Text style={styles.sectionTitle}>Categories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {['Rings','Necklaces','Earrings','Bracelets'].map(cat => (
+            {['Rings', 'Necklaces', 'Earrings', 'Bracelets'].map(cat => (
               <TouchableOpacity key={cat} style={styles.categoryCard} onPress={() => router.push(`/categories?category=${cat}`)}>
                 <Ionicons name="diamond" size={30} color="#800080" />
                 <Text style={styles.categoryText}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</Text>

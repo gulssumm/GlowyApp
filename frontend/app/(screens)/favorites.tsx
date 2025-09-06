@@ -2,17 +2,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    RefreshControl,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { addToCart as apiAddToCart, getFavorites, removeFromFavorites } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { productCardStyles, commonColors, jewelryCardStyles } from "../../styles/commonStyles";
 
 interface FavoriteItem {
   id: number;
@@ -63,7 +64,8 @@ export default function FavoritesScreen() {
     setRefresing(false);
   };
 
-  const handleRemoveFromFavorites = async (jewelryId: number) => {
+  const handleRemoveFromFavorites = async (jewelryId: number, event: any) => {
+    event.stopPropagation(); // Prevent navigation when removing from favorites
     setRemovingFavorite(jewelryId);
     try {
       await removeFromFavorites(jewelryId);
@@ -75,7 +77,8 @@ export default function FavoritesScreen() {
     }
   };
 
-  const handleAddToCart = async (jewelry: FavoriteItem['jewellery']) => {
+  const handleAddToCart = async (jewelry: FavoriteItem['jewellery'], event: any) => {
+    event.stopPropagation(); // Prevent navigation when adding to cart
     setAddingToCart(jewelry.id);
     try {
       await apiAddToCart(jewelry.id, 1);
@@ -88,54 +91,80 @@ export default function FavoritesScreen() {
   };
 
   const renderFavoriteItem = ({ item }: { item: FavoriteItem }) => (
-    <View style={styles.favoriteCard}>
-      <TouchableOpacity 
-        style={styles.productSection}
-        onPress={() => router.push(`/product-detail?id=${item.jewellery.id}`)}
-      >
-        <Image source={{ uri: item.jewellery.imageUrl }} style={styles.productImage} />
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{item.jewellery.name}</Text>
-          <Text style={styles.productDescription}>{item.jewellery.description}</Text>
-          <Text style={styles.productPrice}>${item.jewellery.price.toLocaleString()}</Text>
-          <Text style={styles.addedDate}>
-            Added {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
-        </View>
-      </TouchableOpacity>
-      
-      <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.cartButton, addingToCart === item.jewellery.id && { opacity: 0.7 }]}
-          onPress={() => handleAddToCart(item.jewellery)}
-          disabled={addingToCart === item.jewellery.id}
-        >
-          <Ionicons 
-            name={addingToCart === item.jewellery.id ? "time-outline" : "bag-add"} 
-            size={20} 
-            color="#fff" 
-          />
-          <Text style={styles.cartButtonText}>
-            {addingToCart === item.jewellery.id ? "Adding..." : "Add to Cart"}
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.removeButton, removingFavorite === item.jewellery.id && { opacity: 0.7 }]}
-          onPress={() => handleRemoveFromFavorites(item.jewellery.id)}
+    <TouchableOpacity
+      style={productCardStyles.gridCard}
+      onPress={() => router.push(`/product-detail?id=${item.jewellery.id}`)}
+    >
+      <View style={productCardStyles.imageContainer}>
+        <Image
+          source={{ uri: item.jewellery.imageUrl }}
+          style={productCardStyles.gridImage}
+        />
+        <TouchableOpacity
+          style={[
+            jewelryCardStyles.favoriteButton,
+            removingFavorite === item.jewellery.id && { opacity: 0.7 }
+          ]}
+          onPress={(e) => handleRemoveFromFavorites(item.jewellery.id, e)}
           disabled={removingFavorite === item.jewellery.id}
         >
-          <Ionicons 
-            name={removingFavorite === item.jewellery.id ? "time-outline" : "heart-dislike"} 
-            size={20} 
-            color="#fff" 
+          <Ionicons
+            name={
+              removingFavorite === item.jewellery.id
+                ? "time-outline"
+                : "heart"
+            }
+            size={20}
+            color={commonColors.error}
           />
-          <Text style={styles.removeButtonText}>
-            {removingFavorite === item.jewellery.id ? "Removing..." : "Remove"}
-          </Text>
         </TouchableOpacity>
       </View>
-    </View>
+      <View style={jewelryCardStyles.info}>
+        <Text style={jewelryCardStyles.name}>{item.jewellery.name}</Text>
+        <Text style={jewelryCardStyles.price}>
+          ${item.jewellery.price.toLocaleString()}
+        </Text>
+        
+        {/* Action Buttons */}
+        <View style={productCardStyles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              productCardStyles.primaryActionButton,
+              addingToCart === item.jewellery.id && { opacity: 0.7 }
+            ]}
+            onPress={(e) => handleAddToCart(item.jewellery, e)}
+            disabled={addingToCart === item.jewellery.id}
+          >
+            <Ionicons
+              name={addingToCart === item.jewellery.id ? "time-outline" : "bag-add"}
+              size={16}
+              color={commonColors.text.white}
+            />
+            <Text style={productCardStyles.buttonText}>
+              {addingToCart === item.jewellery.id ? "Adding..." : "Add to Cart"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              productCardStyles.secondaryActionButton,
+              removingFavorite === item.jewellery.id && { opacity: 0.7 }
+            ]}
+            onPress={(e) => handleRemoveFromFavorites(item.jewellery.id, e)}
+            disabled={removingFavorite === item.jewellery.id}
+          >
+            <Ionicons
+              name={removingFavorite === item.jewellery.id ? "time-outline" : "heart-dislike"}
+              size={16}
+              color={commonColors.text.white}
+            />
+            <Text style={productCardStyles.buttonText}>
+              {removingFavorite === item.jewellery.id ? "Removing..." : "Remove"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 
   const renderEmptyState = () => (
@@ -143,12 +172,12 @@ export default function FavoritesScreen() {
       <Ionicons name="heart-outline" size={80} color="#ccc" />
       <Text style={styles.emptyTitle}>No Favorites Yet</Text>
       <Text style={styles.emptySubtitle}>
-        {isLoggedIn 
+        {isLoggedIn
           ? "Browse products and tap the heart icon to add favorites"
           : "Please log in to see your favorites"}
       </Text>
-      <TouchableOpacity 
-        style={styles.browseButton} 
+      <TouchableOpacity
+        style={styles.browseButton}
         onPress={() => isLoggedIn ? router.push('/main') : router.push('/login')}
       >
         <Text style={styles.browseButtonText}>
@@ -191,9 +220,12 @@ export default function FavoritesScreen() {
         renderEmptyState()
       ) : (
         <FlatList
+          key="favorites-grid" // Forces consistent rendering
           data={favorites}
           renderItem={renderFavoriteItem}
           keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.productRow}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -232,88 +264,14 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 20,
   },
-  favoriteCard: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  productSection: {
-    flexDirection: "row",
-    padding: 15,
-  },
-  productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 15,
-  },
-  productInfo: {
-    flex: 1,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-  },
-  productDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-  },
-  productPrice: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#800080",
-    marginBottom: 4,
+  productRow: {
+    justifyContent: "space-between",
+    paddingHorizontal: 5,
   },
   addedDate: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#999",
-  },
-  actionButtons: {
-    flexDirection: "row",
-    paddingHorizontal: 15,
-    paddingBottom: 15,
-    gap: 10,
-  },
-  cartButton: {
-    flex: 1,
-    backgroundColor: "#800080",
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cartButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginLeft: 5,
-  },
-  removeButton: {
-    flex: 1,
-    backgroundColor: "#ff4444",
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  removeButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginLeft: 5,
+    marginBottom: 8,
   },
   emptyContainer: {
     flex: 1,

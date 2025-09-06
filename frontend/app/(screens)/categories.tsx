@@ -180,7 +180,6 @@ export default function CategoriesScreen() {
         </View>
         <View style={styles.productInfo}>
           <Text style={styles.productName}>{item.name}</Text>
-          <Text style={styles.productDescription}>{item.description}</Text>
           <Text style={styles.productPrice}>${item.price.toLocaleString()}</Text>
           <TouchableOpacity 
             style={[
