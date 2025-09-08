@@ -4,7 +4,8 @@ export interface Jewellery {
   description: string;
   price: number;
   imageUrl: string;
-  category?: string; 
+  category?: string;
+  categoryId: number;
 }
 
 export interface FavoriteStatus {

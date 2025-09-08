@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { addToCart as apiAddToCart, getFavorites, removeFromFavorites } from "../../api";
+import { addToCart as apiAddToCart } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import {
   productCardStyles,
@@ -22,6 +22,7 @@ import {
 import { CategoryTabs } from "@/components/CategoryTabs";
 import { CATEGORIES } from "@/constants/categories";
 import { useFavoriteCategoryFilter } from "@/hooks/useCategoryFilter";
+import { useFavorites } from "@/hooks/useFavorites";
 import { FavoriteItem } from "@/types";
 
 // Reusable Header Component
@@ -56,60 +57,36 @@ const ScreenHeader = ({
 export default function FavoritesScreen() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefresing] = useState(false);
-  const [removingFavorite, setRemovingFavorite] = useState<number | null>(null);
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+
+  // Use the custom favorites hook
+  const {
+    favorites,
+    loading,
+    removingFavorite,
+    addFavorite,
+    removeFavorite,
+    fetchFavorites,
+  } = useFavorites(isLoggedIn);
+
+  // Filter favorites by selected category
   const filteredFavorites = useFavoriteCategoryFilter(favorites, selectedCategory);
-
-  // Category Tabs UI component
-  <CategoryTabs
-    categories={CATEGORIES}
-    selectedCategory={selectedCategory}
-    onSelectCategory={setSelectedCategory}
-  />
-
-  const fetchFavorites = useCallback(async () => {
-    if (!isLoggedIn) {
-      setFavorites([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const data = await getFavorites();
-      setFavorites(data || []);
-    } catch (error) {
-      console.error("Failed to fetch favorites:", error);
-      setFavorites([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [isLoggedIn]);
 
   useEffect(() => {
     fetchFavorites();
   }, [fetchFavorites]);
 
   const handleRefresh = async () => {
-    setRefresing(true);
+    setRefreshing(true);
     await fetchFavorites();
-    setRefresing(false);
+    setRefreshing(false);
   };
 
   const handleRemoveFromFavorites = async (jewelryId: number, event: any) => {
     event.stopPropagation();
-    setRemovingFavorite(jewelryId);
-    try {
-      await removeFromFavorites(jewelryId);
-      setFavorites(prev => prev.filter(item => item.jewellery.id !== jewelryId));
-    } catch (error) {
-      console.error("Failed to remove from favorites:", error);
-    } finally {
-      setRemovingFavorite(null);
-    }
+    await removeFavorite(jewelryId);
   };
 
   const handleAddToCart = async (jewelry: FavoriteItem['jewellery'], event: any) => {
@@ -330,11 +307,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   selectedCategoryTab: {
-    backgroundColor: "#6200ee",
+    backgroundColor: "#800080",
   },
   categoryTabText: {
     marginLeft: 8,
-    color: "#6200ee",
+    color: "#800080",
     fontWeight: "bold",
   },
   selectedCategoryTabText: {

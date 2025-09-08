@@ -3,14 +3,8 @@ import { TouchableOpacity, View, Image, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { jewelryCardStyles, productCardStyles, commonColors } from '../styles/commonStyles';
+import { Jewellery } from "../types";
 
-interface Jewellery {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-}
 
 interface ProductCardProps {
   item: Jewellery;
