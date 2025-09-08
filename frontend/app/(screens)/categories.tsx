@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
-  Image,
   RefreshControl,
   SafeAreaView,
   StyleSheet,
@@ -21,19 +20,13 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { headerStyles, commonColors, commonSpacing } from "../../styles/commonStyles";
 import { ProductCard } from "../../components/ProductCard";
-import { Jewellery, FavoriteStatus, Category } from "../../types/index";
+import { Jewellery, FavoriteStatus } from "../../types";
+import { CategoryTabs } from "@/components/CategoryTabs";
+import { CATEGORIES } from "@/constants/categories";
 
-const CATEGORIES: Category[] = [
-  { id: 1, name: 'Rings', icon: 'diamond-outline' },
-  { id: 2, name: 'Necklaces', icon: 'ellipse-outline' },
-  { id: 3, name: 'Earrings', icon: 'radio-outline' },
-  { id: 4, name: 'Bracelets', icon: 'remove-outline' },
-];
-
-// Reusable Header Component
-const ScreenHeader = ({ 
-  onBackPress, 
-  title 
+const ScreenHeader = ({
+  onBackPress,
+  title
 }: {
   onBackPress: () => void;
   title: string;
@@ -56,7 +49,7 @@ const ScreenHeader = ({
 export default function CategoriesScreen() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(1);
   const [jewelries, setJewelries] = useState<Jewellery[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,17 +77,17 @@ export default function CategoriesScreen() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    fetchJewelriesByCategory(selectedCategory);
+    if (selectedCategory !== null) {
+      fetchJewelriesByCategory(selectedCategory);
+    }
   }, [fetchJewelriesByCategory, selectedCategory]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchJewelriesByCategory(selectedCategory);
+    if (selectedCategory !== null) {
+      await fetchJewelriesByCategory(selectedCategory);
+    }
     setRefreshing(false);
-  };
-
-  const handleCategorySelect = (categoryId: number) => { 
-    setSelectedCategory(categoryId);
   };
 
   const addToCart = async (item: Jewellery) => {
@@ -112,7 +105,7 @@ export default function CategoriesScreen() {
 
   const toggleFavorite = async (item: Jewellery, event: any) => {
     event.stopPropagation();
-    
+
     if (!isLoggedIn) return;
 
     setTogglingFavorite(item.id);
@@ -133,38 +126,19 @@ export default function CategoriesScreen() {
     }
   };
 
-  const renderCategoryTab = ({ item }: { item: typeof CATEGORIES[0] }) => {
-    const isSelected = selectedCategory === item.id;
-    return (
-      <TouchableOpacity
-        style={[styles.categoryTab, isSelected && styles.selectedCategoryTab]}
-        onPress={() => handleCategorySelect(item.id)}
-      >
-        <Ionicons
-          name={item.icon as any}
-          size={20}
-          color={isSelected ? commonColors.text.white : commonColors.primary}
-        />
-        <Text style={[styles.categoryTabText, isSelected && styles.selectedCategoryTabText]}>
-          {item.name}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
   const renderJewelryCard = ({ item }: { item: Jewellery }) => (
-  <ProductCard
-    item={item}
-    isFavorited={favoriteStatuses[item.id] || false}
-    isTogglingFavorite={togglingFavorite === item.id}
-    isAddingToCart={addingToCart === item.id}
-    onToggleFavorite={toggleFavorite}
-    onAddToCart={(item, e) => {
-      e.stopPropagation();
-      addToCart(item);
-    }}
-  />
-);
+    <ProductCard
+      item={item}
+      isFavorited={favoriteStatuses[item.id] || false}
+      isTogglingFavorite={togglingFavorite === item.id}
+      isAddingToCart={addingToCart === item.id}
+      onToggleFavorite={toggleFavorite}
+      onAddToCart={(item, e) => {
+        e.stopPropagation();
+        addToCart(item);
+      }}
+    />
+  );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -184,16 +158,11 @@ export default function CategoriesScreen() {
       />
 
       {/* Category Tabs */}
-      <View style={styles.categoryTabsContainer}>
-        <FlatList
-          data={CATEGORIES}
-          renderItem={renderCategoryTab}
-          keyExtractor={(item) => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryTabs}
-        />
-      </View>
+      <CategoryTabs
+        categories={CATEGORIES}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
 
       {/* Products List */}
       {loading ? (
@@ -224,36 +193,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: commonColors.background,
-  },
-  categoryTabsContainer: {
-    backgroundColor: "#f8f4ff",
-    paddingVertical: commonSpacing.m,
-  },
-  categoryTabs: {
-    paddingHorizontal: commonSpacing.l,
-  },
-  categoryTab: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: commonColors.background,
-    borderRadius: 20,
-    paddingHorizontal: commonSpacing.m,
-    paddingVertical: commonSpacing.s,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: commonColors.primary,
-  },
-  selectedCategoryTab: {
-    backgroundColor: commonColors.primary,
-  },
-  categoryTabText: {
-    marginLeft: 5,
-    fontSize: 14,
-    color: commonColors.primary,
-    fontWeight: "500",
-  },
-  selectedCategoryTabText: {
-    color: commonColors.text.white,
   },
   loadingContainer: {
     flex: 1,

@@ -359,7 +359,7 @@ export default function MainScreen() {
           "Please log in to view your cart.",
           [
             { text: "Cancel", onPress: () => { }, style: "cancel" },
-            { text: "Login", onPress: () => router.push('/cart') }
+            { text: "Login", onPress: () => router.push('/login') }
           ],
           "cart-outline"
         ),

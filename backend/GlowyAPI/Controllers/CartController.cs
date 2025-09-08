@@ -36,13 +36,12 @@ namespace GlowyAPI.Controllers
 
         private async Task<Cart> GetOrCreateUserCart(int userId)
         {
-            // === FIX: Add a user existence check to prevent foreign key errors ===
+            // Add a user existence check to prevent foreign key errors
             var userExists = await _context.Users.FindAsync(userId);
             if (userExists == null)
             {
                 throw new KeyNotFoundException($"User with ID {userId} not found.");
             }
-            // === END OF FIX ===
 
             var cart = await _context.Carts
                 .Include(c => c.CartItems)

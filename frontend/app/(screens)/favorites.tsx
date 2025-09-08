@@ -13,30 +13,22 @@ import {
 } from "react-native";
 import { addToCart as apiAddToCart, getFavorites, removeFromFavorites } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-import { 
-  productCardStyles, 
-  commonColors, 
-  jewelryCardStyles, 
-  headerStyles 
+import {
+  productCardStyles,
+  commonColors,
+  jewelryCardStyles,
+  headerStyles
 } from "../../styles/commonStyles";
-
-interface FavoriteItem {
-  id: number;
-  createdAt: string;
-  jewellery: {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    imageUrl: string;
-  };
-}
+import { CategoryTabs } from "@/components/CategoryTabs";
+import { CATEGORIES } from "@/constants/categories";
+import { useFavoriteCategoryFilter } from "@/hooks/useCategoryFilter";
+import { FavoriteItem } from "@/types";
 
 // Reusable Header Component
-const ScreenHeader = ({ 
-  onBackPress, 
-  title, 
-  rightAction 
+const ScreenHeader = ({
+  onBackPress,
+  title,
+  rightAction
 }: {
   onBackPress: () => void;
   title: string;
@@ -69,6 +61,15 @@ export default function FavoritesScreen() {
   const [refreshing, setRefresing] = useState(false);
   const [removingFavorite, setRemovingFavorite] = useState<number | null>(null);
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const filteredFavorites = useFavoriteCategoryFilter(favorites, selectedCategory);
+
+  // Category Tabs UI component
+  <CategoryTabs
+    categories={CATEGORIES}
+    selectedCategory={selectedCategory}
+    onSelectCategory={setSelectedCategory}
+  />
 
   const fetchFavorites = useCallback(async () => {
     if (!isLoggedIn) {
@@ -153,7 +154,7 @@ export default function FavoritesScreen() {
         <Text style={jewelryCardStyles.price}>
           ${item.jewellery.price.toLocaleString()}
         </Text>
-        
+
         <View style={productCardStyles.actionButtons}>
           <TouchableOpacity
             style={[
@@ -234,16 +235,23 @@ export default function FavoritesScreen() {
         title={`Favorites (${favorites.length})`}
       />
 
+      {/* Category Tabs */}
+      <CategoryTabs
+        categories={CATEGORIES}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <Text>Loading favorites...</Text>
         </View>
-      ) : favorites.length === 0 ? (
+      ) : filteredFavorites.length === 0 ? (
         renderEmptyState()
       ) : (
         <FlatList
           key="favorites-grid"
-          data={favorites}
+          data={filteredFavorites}
           renderItem={renderFavoriteItem}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
@@ -306,5 +314,30 @@ const styles = StyleSheet.create({
     color: commonColors.text.white,
     fontSize: 16,
     fontWeight: "bold",
+  },
+  categoryTabsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  categoryTab: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+  },
+  selectedCategoryTab: {
+    backgroundColor: "#6200ee",
+  },
+  categoryTabText: {
+    marginLeft: 8,
+    color: "#6200ee",
+    fontWeight: "bold",
+  },
+  selectedCategoryTabText: {
+    color: "#fff",
   },
 });

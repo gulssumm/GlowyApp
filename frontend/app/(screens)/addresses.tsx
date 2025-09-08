@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
+import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -91,10 +91,10 @@ export default function AddressesScreen() {
     setRefreshing(false);
   }, [isLoggedIn]);
 
-  useFocusEffect(
+  useEffect(
     useCallback(() => {
       fetchAddresses();
-    }, [isLoggedIn])
+    }, [router, isLoggedIn])
   );
 
   const resetForm = () => {

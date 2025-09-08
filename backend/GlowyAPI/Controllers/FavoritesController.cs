@@ -37,6 +37,7 @@ namespace GlowyAPI.Controllers
                 var userId = GetCurrentUserId();
                 var favorites = await _context.Favorites
                     .Include(f => f.Jewellery)
+                    .ThenInclude(j => j.Category)
                     .Where(f => f.UserId == userId)
                     .OrderByDescending(f => f.CreatedAt)
                     .ToListAsync();
@@ -59,7 +60,9 @@ namespace GlowyAPI.Controllers
                         name = f.Jewellery.Name,
                         description = f.Jewellery.Description,
                         price = f.Jewellery.Price,
-                        imageUrl = f.Jewellery.ImageUrl
+                        imageUrl = f.Jewellery.ImageUrl,
+                        categoryId = f.Jewellery.CategoryId,
+                        categoryName = f.Jewellery.Category.Name
                     }
                 });
                 return Ok(result);
@@ -176,6 +179,54 @@ namespace GlowyAPI.Controllers
             {
                 Console.WriteLine($"Error in GetFavoriteStatus: {ex.Message}");
                 return StatusCode(500, new { message = "Error checking favorite status" });
+            }
+        }
+
+        [HttpGet("category/{categoryId}")]
+        public async Task<IActionResult> GetUserFavoritesByCategory(int categoryId)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var favorites = await _context.Favorites
+                    .Include(f => f.Jewellery)
+                    .ThenInclude(j => j.Category)
+                    .Where(f => f.UserId == userId && f.Jewellery.CategoryId == categoryId)
+                    .OrderByDescending(f => f.CreatedAt)
+                    .ToListAsync();
+
+                foreach (var favorite in favorites)
+                {
+                    if (favorite.Jewellery != null)
+                    {
+                        favorite.Jewellery.ImageUrl = ImageUrlHelper.ProcessImageUrl(favorite.Jewellery.ImageUrl, Request);
+                    }
+                }
+
+                var result = favorites.Select(f => new
+                {
+                    id = f.Id,
+                    createdAt = f.CreatedAt,
+                    jewellery = new
+                    {
+                        id = f.Jewellery.Id,
+                        name = f.Jewellery.Name,
+                        description = f.Jewellery.Description,
+                        price = f.Jewellery.Price,
+                        imageUrl = f.Jewellery.ImageUrl,
+                        categoryId = f.Jewellery.CategoryId,
+                        categoryName = f.Jewellery.Category.Name
+                    }
+                });
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving favorites by category.", details = ex.Message });
             }
         }
 

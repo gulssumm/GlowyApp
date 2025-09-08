@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
 import React, { useCallback, useState } from "react";
 import {
   Alert,
@@ -98,10 +98,10 @@ export default function CartScreen() {
     setRefreshing(false);
   }, [isLoggedIn]);
 
-  useFocusEffect(
+  useEffect(
     useCallback(() => {
       fetchCart();
-    }, [isLoggedIn])
+    }, [router, isLoggedIn])
   );
 
   const updateQuantity = async (jewelleryId: number, change: number, currentQuantity: number) => {

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
+import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -98,10 +98,10 @@ export default function MyOrder() {
     await fetchOrders();
   };
 
-  useFocusEffect(
+  useEffect(
     useCallback(() => {
       fetchOrders();
-    }, [isLoggedIn])
+    }, [router, isLoggedIn])
   );
 
   const getImageUrl = (imageUrl: string) => {

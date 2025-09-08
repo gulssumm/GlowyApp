@@ -8,6 +8,7 @@ export default {
     scheme: "glowyapp", 
     extra: {
       API_URL: process.env.API_URL,
+      API_IMAGE_BASE_URL: process.env.API_IMAGE_BASE_URL
     },
   },
 };
