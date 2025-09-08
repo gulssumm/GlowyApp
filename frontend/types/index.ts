@@ -28,3 +28,11 @@ export interface FavoriteItem {
     categoryId: number; 
   };
 }
+export interface MenuItem { 
+  id: string; 
+  title: string; 
+  icon: string; 
+  action: () => void; 
+  color?: string; 
+  dividerAfter?: boolean; 
+}

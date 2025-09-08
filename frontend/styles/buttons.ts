@@ -83,4 +83,11 @@ export const ButtonStyles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  alertButtonContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 1,
+    justifyContent: 'space-between',
+    paddingBottom: 15,
+  },
 });

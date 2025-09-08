@@ -18,112 +18,8 @@ import { ButtonStyles } from "../../styles/buttons";
 import { headerStyles, commonColors, commonSpacing } from "../../styles/commonStyles";
 import { ProductCard } from "../../components/ProductCard";
 import { Jewellery, FavoriteStatus } from "../../types";
-
-interface MenuItem { 
-  id: string; 
-  title: string; 
-  icon: string; 
-  action: () => void; 
-  color?: string; 
-  dividerAfter?: boolean; 
-}
-
-// Custom Alert Component 
-interface CustomAlertProps {
-  visible: boolean;
-  title: string;
-  message: string;
-  buttons: Array<{
-    text: string;
-    onPress: () => void;
-    style?: 'default' | 'cancel' | 'destructive';
-  }>;
-  onClose: () => void;
-  icon?: string;
-}
-
-const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, buttons, onClose, icon }) => {
-  if (!visible) return null;
-
-  const getButtonStyle = (style?: string) => {
-    switch (style) {
-      case 'destructive':
-        return ButtonStyles.warning;
-      case 'cancel':
-        return ButtonStyles.secondary;
-      default:
-        return ButtonStyles.primary;
-    }
-  };
-
-  const getButtonTextStyle = (style?: string) => {
-    switch (style) {
-      case 'cancel':
-        return { ...ButtonStyles.text, color: '#333' };
-      default:
-        return ButtonStyles.text;
-    }
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={ButtonStyles.alertOverlay}>
-        <View style={ButtonStyles.alertBox}>
-          {icon && (
-            <Ionicons
-              name={icon as any}
-              size={50}
-              color={commonColors.primary}
-              style={ButtonStyles.alertIcon}
-            />
-          )}
-          <Text style={[ButtonStyles.alertMessage, { fontWeight: 'bold', fontSize: 18, marginBottom: 10 }]}>
-            {title}
-          </Text>
-          <Text style={ButtonStyles.alertMessage}>
-            {message}
-          </Text>
-
-          {buttons.length === 1 ? (
-            <TouchableOpacity
-              style={ButtonStyles.alertButton}
-              onPress={() => {
-                buttons[0].onPress();
-                onClose();
-              }}
-            >
-              <Text style={ButtonStyles.alertButtonText}>{buttons[0].text}</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.alertButtonContainer}>
-              {buttons.map((button, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    getButtonStyle(button.style),
-                    {
-                      flex: 1,
-                      marginHorizontal: 8,
-                      marginTop: 1,
-                    }
-                  ]}
-                  onPress={() => {
-                    button.onPress();
-                    onClose();
-                  }}
-                >
-                  <Text style={getButtonTextStyle(button.style)}>
-                    {button.text}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
-};
+import { MenuItem } from "@/types";
+import { CustomAlert } from "@/components/CustomAlert";
 
 // Main Screen Header Component (different from other screens)
 const MainScreenHeader = ({ 
@@ -302,6 +198,7 @@ export default function MainScreen() {
     );
   };
 
+  // Side menu logic and rendering (only used in MainScreen)
   const getMenuItems = (): MenuItem[] => {
     const commonItems: MenuItem[] = [
       { id: 'home', title: 'Home', icon: 'home', action: () => setMenuVisible(false) },
@@ -740,13 +637,6 @@ const styles = StyleSheet.create({
   productRow: {
     justifyContent: "space-between",
     paddingHorizontal: 5,
-  },
-  alertButtonContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 15,
-    paddingVertical: 1,
-    justifyContent: 'space-between',
-    paddingBottom: 15,
   },
   bottomNavContainer: {
     position: "absolute",
