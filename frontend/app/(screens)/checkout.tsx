@@ -25,6 +25,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { AddressForm, AddressFormData } from "@/components/AddressForm";
 import { ButtonStyles } from "@/styles/buttons";
+import { commonColors, commonSpacing } from "@/styles/commonStyles";
+import { PAYMENT_METHODS } from "@/constants/payment_methods";
 
 interface CartItem {
   id: number;
@@ -52,12 +54,6 @@ interface Address {
   country: string;
   isDefault: boolean;
 }
-
-const PAYMENT_METHODS = [
-  { id: 'CreditCard', name: 'Credit Card', icon: 'card-outline' },
-  { id: 'PayPal', name: 'PayPal', icon: 'logo-paypal' },
-  { id: 'BankTransfer', name: 'Bank Transfer', icon: 'business-outline' },
-];
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -211,7 +207,6 @@ export default function CheckoutScreen() {
       <Image source={{ uri: getImageUrl(item.imageUrl) }} style={styles.itemImage} />
       <View style={styles.itemDetails}>
         <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemQuantity}>Qty: {item.quantity}</Text>
         <Text style={styles.itemPrice}>${(item.price * item.quantity).toLocaleString()}</Text>
       </View>
     </View>
@@ -345,18 +340,18 @@ export default function CheckoutScreen() {
       </ScrollView>
 
       {/* Place Order Button */}
-      <View style={styles.footer}>
+      <View style={ButtonStyles.footer}>
         <TouchableOpacity
-          style={[styles.placeOrderButton, (!selectedAddressId || !selectedPaymentMethod || submitting) && styles.placeOrderButtonDisabled]}
+          style={[ButtonStyles.placeOrderButton, (!selectedAddressId || !selectedPaymentMethod || submitting) && ButtonStyles.placeOrderButtonDisabled]}
           onPress={handlePlaceOrder}
           disabled={!selectedAddressId || !selectedPaymentMethod || submitting}
         >
           {submitting ? (
-            <Text style={styles.placeOrderButtonText}>Placing Order...</Text>
+            <Text style={ButtonStyles.placeOrderButtonText}>Placing Order...</Text>
           ) : (
             <>
               <Ionicons name="checkmark-circle" size={20} color="#fff" />
-              <Text style={styles.placeOrderButtonText}>Place Order</Text>
+              <Text style={ButtonStyles.placeOrderButtonText}>Place Order</Text>
             </>
           )}
         </TouchableOpacity>
@@ -606,29 +601,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 15,
   },
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
-  },
-  placeOrderButton: {
-    backgroundColor: "#800080",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  placeOrderButtonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  placeOrderButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginLeft: 8,
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
@@ -682,13 +654,13 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: commonColors.border,
     borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingHorizontal: commonSpacing.m,
+    paddingVertical: commonSpacing.m,
     fontSize: 16,
-    marginBottom: 15,
-    backgroundColor: "#fff",
+    marginBottom: commonSpacing.m,
+    backgroundColor: commonColors.background,
   },
   inputRow: {
     flexDirection: "row",
@@ -722,39 +694,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#f0f0f0",
     gap: 10,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#666",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: "#800080",
-    alignItems: "center",
-
-  },
-  saveButtonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  saveButtonTextDisabled: {
-    color: "#999",
   },
 });

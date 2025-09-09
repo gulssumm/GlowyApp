@@ -26,13 +26,13 @@ export const ButtonStyles = StyleSheet.create({
     textAlign: "center",
   },
   disabled: {
-    backgroundColor: "#aaa",
+    backgroundColor: "#ccc",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
   textDisabled: {
-    color: "#666",
+    color: "#aaa",
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
@@ -101,5 +101,31 @@ export const ButtonStyles = StyleSheet.create({
     paddingVertical: 1,
     justifyContent: 'space-between',
     paddingBottom: 15,
+  },
+
+  // Additional button styles
+  // PLACE ORDER BUTTON (checkout.tsx)
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+  },
+  placeOrderButton: {
+    backgroundColor: "#800080",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placeOrderButtonDisabled: {
+    backgroundColor: "#ccc",
+  },
+  placeOrderButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 8,
   },
 });

@@ -52,6 +52,7 @@
     "metro-core": "0.76.7",
     "metro-resolver": "0.76.7",
     "metro-runtime": "0.76.7",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "@react-native-community/cli": "latest"
   }
 }

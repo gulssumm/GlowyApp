@@ -112,11 +112,11 @@ export const AddressForm: React.FC<AddressFormProps> = ({
       <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
         {onCancel && (
           <TouchableOpacity
-            style={[ButtonStyles.secondary, { flex: 1 }]}
+            style={[ButtonStyles.primary, { flex: 1 }]}
             onPress={onCancel}
             disabled={submitting}
           >
-            <Text style={[ButtonStyles.text, { color: "#666" }]}>
+            <Text style={[ButtonStyles.text, { color: "#fff" }]}>
               Cancel
             </Text>
           </TouchableOpacity>
