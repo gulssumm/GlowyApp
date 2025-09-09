@@ -23,6 +23,8 @@ import {
   getUserAddresses
 } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { AddressForm, AddressFormData } from "@/components/AddressForm";
+import { ButtonStyles } from "@/styles/buttons";
 
 interface CartItem {
   id: number;
@@ -60,15 +62,15 @@ const PAYMENT_METHODS = [
 export default function CheckoutScreen() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  
+
   const [cartData, setCartData] = useState<CartData | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
-  
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Address form modal
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [addressForm, setAddressForm] = useState({
@@ -94,14 +96,14 @@ export default function CheckoutScreen() {
 
       setCartData(cartResponse);
       setAddresses(addressResponse);
-      
+
       const defaultAddress = addressResponse.find((addr: Address) => addr.isDefault);
       if (defaultAddress) {
         setSelectedAddressId(defaultAddress.id);
       } else if (addressResponse.length > 0) {
         setSelectedAddressId(addressResponse[0].id);
       }
-      
+
     } catch (error: any) {
       console.error("Error fetching checkout data:", error);
       Alert.alert("Error", "Failed to load checkout data");
@@ -118,30 +120,27 @@ export default function CheckoutScreen() {
 
   const getImageUrl = (imageUrl: string) => {
     if (imageUrl.startsWith('http')) {
-    return imageUrl;
+      return imageUrl;
     }
     const fullUrl = `${process.env.API_IMAGE_BASE_URL}/images/jewelry/${imageUrl}`;
     console.log('Image URL:', fullUrl);
     return fullUrl;
   };
 
-  // Validation function for address form
-  const isAddressFormValid = () => {
-    return addressForm.street.trim() !== '' &&
-           addressForm.city.trim() !== '' &&
-           addressForm.state.trim() !== '' &&
-           addressForm.postalCode.trim() !== '' &&
-           addressForm.country.trim() !== '';
-  };
-
-  const handleCreateAddress = async () => {
-    if (!isAddressFormValid()) {
+  const handleCreateAddress = async (data: AddressFormData) => {
+    if (
+      data.street.trim() === '' ||
+      data.city.trim() === '' ||
+      data.state.trim() === '' ||
+      data.postalCode.trim() === '' ||
+      data.country.trim() === ''
+    ) {
       Alert.alert("Error", "Please fill in all address fields");
       return;
     }
 
     try {
-      await createAddress(addressForm);
+      await createAddress(data);
       setShowAddressModal(false);
       setAddressForm({
         street: '',
@@ -151,31 +150,34 @@ export default function CheckoutScreen() {
         country: '',
         isDefault: false
       });
-      
+
       const addressResponse = await getUserAddresses();
       setAddresses(addressResponse);
-      
-      const newAddress = addressResponse.find((addr: Address) => 
-        addr.street === addressForm.street && addr.city === addressForm.city
+
+      const newAddress = addressResponse.find((addr: Address) =>
+        addr.street === data.street && addr.city === data.city
       );
-      if (newAddress && (addressForm.isDefault || !selectedAddressId)) {
+      if (newAddress && (data.isDefault || !selectedAddressId)) {
         setSelectedAddressId(newAddress.id);
       }
-      
+
       Alert.alert("Success", "Address added successfully!");
     } catch (error: any) {
       console.error("Error creating address:", error);
       Alert.alert("Error", "Failed to create address");
     }
   };
-
   const validateCheckout = () => {
     if (!selectedAddressId) {
-      Alert.alert("Missing Information", "Please select or add a delivery address");
+      Alert.alert("Error", "Please select a delivery address.");
       return false;
     }
     if (!selectedPaymentMethod) {
-      Alert.alert("Missing Information", "Please select a payment method");
+      Alert.alert("Error", "Please select a payment method.");
+      return false;
+    }
+    if (!cartData?.items?.length) {
+      Alert.alert("Error", "Your cart is empty.");
       return false;
     }
     return true;
@@ -379,76 +381,24 @@ export default function CheckoutScreen() {
                   <Ionicons name="close" size={24} color="#666" />
                 </TouchableOpacity>
               </View>
-
               <ScrollView
                 style={styles.modalBody}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
-                <TextInput
-                  style={styles.input}
-                  placeholder="Street Address"
-                  placeholderTextColor={"#666"}
-                  value={addressForm.street}
-                  onChangeText={(text) => setAddressForm({ ...addressForm, street: text })}
+                <AddressForm
+                  initialData={addressForm}
+                  onSubmit={handleCreateAddress}
+                  submitting={submitting}
+                  onCancel={() => setShowAddressModal(false)}
+                  inputStyle={styles.input}
+                  inputRowStyle={styles.inputRow}
+                  halfInputStyle={styles.halfInput}
+                  checkboxContainerStyle={styles.checkboxContainer}
+                  checkboxStyle={styles.checkbox}
+                  checkboxTextStyle={styles.checkboxText}
                 />
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="City"
-                    placeholderTextColor={"#666"}
-                    value={addressForm.city}
-                    onChangeText={(text) => setAddressForm({ ...addressForm, city: text })}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="State"
-                    placeholderTextColor={"#666"}
-                    value={addressForm.state}
-                    onChangeText={(text) => setAddressForm({ ...addressForm, state: text })}
-                  />
-                </View>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="Postal Code"
-                    value={addressForm.postalCode}
-                    placeholderTextColor={"#666"}
-                    onChangeText={(text) => setAddressForm({ ...addressForm, postalCode: text })}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="Country"
-                    value={addressForm.country}
-                    placeholderTextColor={"#666"}
-                    onChangeText={(text) => setAddressForm({ ...addressForm, country: text })}
-                  />
-                </View>
-                <TouchableOpacity
-                  style={styles.checkboxContainer}
-                  onPress={() => setAddressForm({ ...addressForm, isDefault: !addressForm.isDefault })}
-                >
-                  <View style={styles.checkbox}>
-                    {addressForm.isDefault && <Ionicons name="checkmark" size={16} color="#800080" />}
-                  </View>
-                  <Text style={styles.checkboxText}>Set as default address</Text>
-                </TouchableOpacity>
               </ScrollView>
-
-              <View style={styles.modalFooter}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setShowAddressModal(false)}>
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.saveButton, !isAddressFormValid() && styles.saveButtonDisabled]} 
-                  onPress={handleCreateAddress}
-                  disabled={!isAddressFormValid()}
-                >
-                  <Text style={[styles.saveButtonText, !isAddressFormValid() && styles.saveButtonTextDisabled]}>
-                    Save Address
-                  </Text>
-                </TouchableOpacity>
-              </View>
             </View>
           </KeyboardAvoidingView>
         </View>
@@ -794,7 +744,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#800080",
     alignItems: "center",
-    
+
   },
   saveButtonDisabled: {
     backgroundColor: "#ccc",

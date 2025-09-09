@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { createAddress, deleteAddress, getUserAddresses, updateAddress } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { AddressForm, AddressFormData } from "@/components/AddressForm";
 
 interface Address {
   id: number;
@@ -32,28 +33,19 @@ interface Address {
   updatedAt: string;
 }
 
-interface AddressFormData {
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  isDefault: boolean;
-}
-
 export default function AddressesScreen() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  
+
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  
+
   const [formData, setFormData] = useState<AddressFormData>({
     street: '',
     city: '',
@@ -134,10 +126,10 @@ export default function AddressesScreen() {
 
   const isFormValid = () => {
     return formData.street.trim() !== '' &&
-           formData.city.trim() !== '' &&
-           formData.state.trim() !== '' &&
-           formData.postalCode.trim() !== '' &&
-           formData.country.trim() !== '';
+      formData.city.trim() !== '' &&
+      formData.state.trim() !== '' &&
+      formData.postalCode.trim() !== '' &&
+      formData.country.trim() !== '';
   };
 
   const handleSubmit = async () => {
@@ -157,7 +149,7 @@ export default function AddressesScreen() {
         await createAddress(formData);
         Alert.alert("Success", "Address added successfully!");
       }
-      
+
       closeModal();
       await fetchAddresses();
     } catch (error: any) {
@@ -217,7 +209,7 @@ export default function AddressesScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      
+
       <View style={styles.addressContent}>
         <Text style={styles.addressText}>{address.street}</Text>
         <Text style={styles.addressText}>
@@ -225,7 +217,7 @@ export default function AddressesScreen() {
         </Text>
         <Text style={styles.addressCountry}>{address.country}</Text>
       </View>
-      
+
       <View style={styles.addressMeta}>
         <Text style={styles.metaText}>
           Added: {new Date(address.createdAt).toLocaleDateString()}
@@ -313,7 +305,7 @@ export default function AddressesScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           {addresses.map(renderAddress)}
-          
+
           {/* Add New Button */}
           <TouchableOpacity style={styles.addButton} onPress={openCreateModal}>
             <Ionicons name="add-circle-outline" size={24} color="#800080" />
@@ -335,10 +327,8 @@ export default function AddressesScreen() {
             style={{ flex: 0, justifyContent: "center" }}
           >
             <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {editingAddress ? "Edit Address" : "Add New Address"}
-                </Text>
+              <View style={[styles.modalHeader, { borderBottomWidth: 0 }]}>
+                <Text style={styles.modalTitle}>Add New Address</Text>
                 <TouchableOpacity onPress={closeModal}>
                   <Ionicons name="close" size={24} color="#666" />
                 </TouchableOpacity>
@@ -349,77 +339,19 @@ export default function AddressesScreen() {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
-                <TextInput
-                  style={styles.input}
-                  placeholder="Street Address"
-                  placeholderTextColor="#666"
-                  value={formData.street}
-                  onChangeText={(text) => setFormData({ ...formData, street: text })}
+                <AddressForm
+                  initialData={formData}
+                  onSubmit={handleSubmit}
+                  submitting={submitting}
+                  onCancel={closeModal}
+                  inputStyle={styles.input}
+                  inputRowStyle={styles.inputRow}
+                  halfInputStyle={styles.halfInput}
+                  checkboxContainerStyle={styles.checkboxContainer}
+                  checkboxStyle={styles.checkbox}
+                  checkboxTextStyle={styles.checkboxText}
                 />
-                
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="City"
-                    placeholderTextColor="#666"
-                    value={formData.city}
-                    onChangeText={(text) => setFormData({ ...formData, city: text })}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="State"
-                    placeholderTextColor="#666"
-                    value={formData.state}
-                    onChangeText={(text) => setFormData({ ...formData, state: text })}
-                  />
-                </View>
-                
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="Postal Code"
-                    placeholderTextColor="#666"
-                    value={formData.postalCode}
-                    onChangeText={(text) => setFormData({ ...formData, postalCode: text })}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.halfInput]}
-                    placeholder="Country"
-                    placeholderTextColor="#666"
-                    value={formData.country}
-                    onChangeText={(text) => setFormData({ ...formData, country: text })}
-                  />
-                </View>
-                
-                <TouchableOpacity
-                  style={styles.checkboxContainer}
-                  onPress={() => setFormData({ ...formData, isDefault: !formData.isDefault })}
-                >
-                  <View style={styles.checkbox}>
-                    {formData.isDefault && <Ionicons name="checkmark" size={16} color="#800080" />}
-                  </View>
-                  <Text style={styles.checkboxText}>Set as default address</Text>
-                </TouchableOpacity>
               </ScrollView>
-
-              <View style={styles.modalFooter}>
-                <TouchableOpacity 
-                  style={styles.cancelButton} 
-                  onPress={closeModal}
-                  disabled={submitting}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.saveButton, (!isFormValid() || submitting) && styles.saveButtonDisabled]} 
-                  onPress={handleSubmit}
-                  disabled={!isFormValid() || submitting}
-                >
-                  <Text style={[styles.saveButtonText, (!isFormValid() || submitting) && styles.saveButtonTextDisabled]}>
-                    {submitting ? "Saving..." : (editingAddress ? "Update" : "Save")}
-                  </Text>
-                </TouchableOpacity>
-              </View>
             </View>
           </KeyboardAvoidingView>
         </View>
@@ -610,7 +542,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: "90%",
+    maxHeight: "100%",
   },
   modalHeader: {
     flexDirection: "row",
@@ -671,38 +603,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#f0f0f0",
     gap: 10,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#666",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: "#800080",
-    alignItems: "center",
-  },
-  saveButtonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  saveButtonTextDisabled: {
-    color: "#999",
   },
 });

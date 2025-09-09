@@ -25,6 +25,18 @@ export const ButtonStyles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
+  disabled: {
+    backgroundColor: "#aaa",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  textDisabled: {
+    color: "#666",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 
   // Alert / Success specific styles
   alertOverlay: {
