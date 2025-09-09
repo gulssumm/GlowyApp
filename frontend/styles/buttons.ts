@@ -128,4 +128,43 @@ export const ButtonStyles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 8,
   },
+  // RADIO BUTTON
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#800080",
+    marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioButtonInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#800080",
+  },
+  // + BUTTON
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  addButtonText: {
+    color: "#800080",
+    fontWeight: "600",
+    marginLeft: 5,
+  },
+  addFirstButton: {
+    backgroundColor: "#800080",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  addFirstButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
 });

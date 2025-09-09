@@ -19,6 +19,7 @@ import {
 import { createAddress, deleteAddress, getUserAddresses, updateAddress } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { AddressForm, AddressFormData } from "@/components/AddressForm";
+import { ButtonStyles } from "@/styles/buttons";
 
 interface Address {
   id: number;
@@ -289,7 +290,7 @@ export default function AddressesScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Addresses</Text>
         {addresses.length > 0 && (
-          <TouchableOpacity style={styles.addHeaderButton} onPress={openCreateModal}>
+          <TouchableOpacity style={ButtonStyles.addButton} onPress={openCreateModal}>
             <Ionicons name="add" size={24} color="#800080" />
           </TouchableOpacity>
         )}
@@ -381,9 +382,6 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     marginHorizontal: 20,
-  },
-  addHeaderButton: {
-    padding: 5,
   },
   loadingContainer: {
     flex: 1,

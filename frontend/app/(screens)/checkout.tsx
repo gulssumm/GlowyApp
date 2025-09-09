@@ -219,8 +219,8 @@ export default function CheckoutScreen() {
       onPress={() => setSelectedAddressId(address.id)}
     >
       <View style={styles.addressHeader}>
-        <View style={styles.radioButton}>
-          {selectedAddressId === address.id && <View style={styles.radioButtonInner} />}
+        <View style={ButtonStyles.radioButton}>
+          {selectedAddressId === address.id && <View style={ButtonStyles.radioButtonInner} />}
         </View>
         {address.isDefault && (
           <View style={styles.defaultBadge}>
@@ -242,8 +242,8 @@ export default function CheckoutScreen() {
       onPress={() => setSelectedPaymentMethod(method.id)}
     >
       <View style={styles.paymentHeader}>
-        <View style={styles.radioButton}>
-          {selectedPaymentMethod === method.id && <View style={styles.radioButtonInner} />}
+        <View style={ButtonStyles.radioButton}>
+          {selectedPaymentMethod === method.id && <View style={ButtonStyles.radioButtonInner} />}
         </View>
         <Ionicons name={method.icon as any} size={24} color="#800080" />
         <Text style={styles.paymentText}>{method.name}</Text>
@@ -315,16 +315,16 @@ export default function CheckoutScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Delivery Address</Text>
-            <TouchableOpacity style={styles.addButton} onPress={() => setShowAddressModal(true)}>
+            <TouchableOpacity style={ButtonStyles.addButton} onPress={() => setShowAddressModal(true)}>
               <Ionicons name="add" size={20} color="#800080" />
-              <Text style={styles.addButtonText}>Add New</Text>
+              <Text style={ButtonStyles.addButtonText}>Add New</Text>
             </TouchableOpacity>
           </View>
           {addresses.length === 0 ? (
             <View style={styles.emptySection}>
               <Text style={styles.emptySectionText}>No addresses found</Text>
-              <TouchableOpacity style={styles.addFirstButton} onPress={() => setShowAddressModal(true)}>
-                <Text style={styles.addFirstButtonText}>Add Address</Text>
+              <TouchableOpacity style={ButtonStyles.addFirstButton} onPress={() => setShowAddressModal(true)}>
+                <Text style={ButtonStyles.addFirstButtonText}>Add Address</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -449,17 +449,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
-  addButtonText: {
-    color: "#800080",
-    fontWeight: "600",
-    marginLeft: 5,
-  },
   cartItem: {
     flexDirection: "row",
     padding: 15,
@@ -514,16 +503,6 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 15,
   },
-  addFirstButton: {
-    backgroundColor: "#800080",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  addFirstButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
   addressList: {
     gap: 10,
   },
@@ -542,22 +521,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
-  },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#800080",
-    marginRight: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  radioButtonInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#800080",
   },
   defaultBadge: {
     backgroundColor: "#4CAF50",
