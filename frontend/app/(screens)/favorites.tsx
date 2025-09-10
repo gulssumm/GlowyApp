@@ -294,29 +294,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  categoryTabsContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  categoryTab: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-  },
-  selectedCategoryTab: {
-    backgroundColor: "#800080",
-  },
-  categoryTabText: {
-    marginLeft: 8,
-    color: "#800080",
-    fontWeight: "bold",
-  },
-  selectedCategoryTabText: {
-    color: "#fff",
-  },
 });

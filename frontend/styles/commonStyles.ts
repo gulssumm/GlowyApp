@@ -285,3 +285,32 @@ export const productCardStyles = StyleSheet.create({
     marginLeft: 5,
   },
 });
+
+// Category tab styles
+export const categoryTabsStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  tab: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+  },
+  tabSelected: {
+    backgroundColor: commonColors.primary,
+  },
+  tabText: {
+    marginLeft: 8,
+    color: commonColors.primary,
+    fontWeight: "bold",
+  },
+  tabTextSelected: {
+    color: commonColors.text.white,
+  },
+});

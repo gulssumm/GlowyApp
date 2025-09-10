@@ -2,7 +2,7 @@ import React from "react";
 import { FlatList, TouchableOpacity, Text, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Category } from "@/types";
-import { commonColors } from "@/styles/commonStyles";
+import { commonColors, categoryTabsStyles } from "@/styles/commonStyles";
 
 interface CategoryTabsProps {
   categories: Category[];
@@ -22,8 +22,8 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
     return (
       <TouchableOpacity
         style={[
-          styles.categoryTab,
-          isSelected && styles.selectedCategoryTab,
+          categoryTabsStyles.tab,
+          isSelected && categoryTabsStyles.tabSelected,
           style,
         ]}
         onPress={() => onSelectCategory(isSelected ? null : item.id)}
@@ -33,7 +33,10 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
           size={20}
           color={isSelected ? commonColors.text.white : commonColors.primary}
         />
-        <Text style={[styles.categoryTabText, isSelected && styles.selectedCategoryTabText]}>
+        <Text style={[
+          categoryTabsStyles.tabText,
+          isSelected && categoryTabsStyles.tabTextSelected
+        ]}>
           {item.name}
         </Text>
       </TouchableOpacity>
@@ -41,7 +44,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
   };
 
   return (
-    <View style={styles.categoryTabsContainer}>
+    <View style={categoryTabsStyles.container}>
       <FlatList
         data={categories}
         renderItem={renderCategoryTab}
