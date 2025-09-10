@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   FlatList,
@@ -59,7 +59,9 @@ export default function FavoritesScreen() {
   const { isLoggedIn } = useAuth();
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const params = useLocalSearchParams();
+  const initialCategory = params.categoryId ? Number(params.categoryId) : null;
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(initialCategory);
 
   // Use the custom favorites hook
   const {

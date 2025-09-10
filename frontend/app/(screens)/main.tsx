@@ -17,15 +17,17 @@ import { useAuth } from "../../context/AuthContext";
 import { ButtonStyles } from "../../styles/buttons";
 import { headerStyles, commonColors, commonSpacing } from "../../styles/commonStyles";
 import { ProductCard } from "../../components/ProductCard";
-import { Jewellery, FavoriteStatus } from "../../types";
-import { MenuItem } from "@/types";
-import { CustomAlert } from "@/components/CustomAlert";
+import { CustomAlert } from "../../components/CustomAlert";
+import { CategoryTabs } from "../../components/CategoryTabs";
 import { useLogout } from "@/hooks/useLogout";
+import { Jewellery, FavoriteStatus } from "../../types";
+import { MenuItem, Category } from "@/types";
+import { CATEGORIES } from "@/constants/categories";
 
 // Main Screen Header Component (different from other screens)
-const MainScreenHeader = ({ 
-  onMenuPress, 
-  title 
+const MainScreenHeader = ({
+  onMenuPress,
+  title
 }: {
   onMenuPress: () => void;
   title: string;
@@ -58,6 +60,15 @@ export default function MainScreen() {
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const [favoriteStatuses, setFavoriteStatuses] = useState<FavoriteStatus>({});
   const [togglingFavorite, setTogglingFavorite] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+
+  // Handle Category Selection
+  const handleCategorySelect = (categoryId: number | null) => {
+    setSelectedCategory(categoryId);
+    if (categoryId !== null) {
+      router.push({ pathname: "/favorites", params: { categoryId: categoryId.toString() } });
+    }
+  };
 
   // Custom Alert State
   const [customAlert, setCustomAlert] = useState<{
@@ -446,14 +457,11 @@ export default function MainScreen() {
         {/* Categories */}
         <View style={styles.categoriesSection}>
           <Text style={styles.sectionTitle}>Categories</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {['Rings', 'Necklaces', 'Earrings', 'Bracelets'].map(cat => (
-              <TouchableOpacity key={cat} style={styles.categoryCard} onPress={() => router.push(`/categories?category=${cat}`)}>
-                <Ionicons name="diamond" size={30} color={commonColors.primary} />
-                <Text style={styles.categoryText}>{cat}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <CategoryTabs
+            categories={CATEGORIES}
+            selectedCategory={selectedCategory}
+            onSelectCategory={handleCategorySelect}
+          />
         </View>
 
         {/* Products */}
