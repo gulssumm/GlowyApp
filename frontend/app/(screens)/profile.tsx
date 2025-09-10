@@ -14,6 +14,7 @@ import {
   View
 } from "react-native";
 import { logoutUser as apiLogoutUser, testTokenValidation, updateUserProfile } from "../../api";
+import { useLogout } from "@/hooks/useLogout";
 
 export default function Profile() {
   const router = useRouter();
@@ -98,26 +99,7 @@ export default function Profile() {
     setIsEditing(false);
   };
 
-  const handleLogout = async () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await apiLogoutUser();
-            await logout();
-            router.replace("/welcome");
-          } catch (error) {
-            console.error("Logout error:", error);
-            await logout();
-            router.replace("/welcome");
-          }
-        }
-      }
-    ]);
-  };
+  const handleLogout = useLogout();
 
   if (authLoading) {
     return (

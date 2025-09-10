@@ -20,6 +20,7 @@ import { ProductCard } from "../../components/ProductCard";
 import { Jewellery, FavoriteStatus } from "../../types";
 import { MenuItem } from "@/types";
 import { CustomAlert } from "@/components/CustomAlert";
+import { useLogout } from "@/hooks/useLogout";
 
 // Main Screen Header Component (different from other screens)
 const MainScreenHeader = ({ 
@@ -36,7 +37,10 @@ const MainScreenHeader = ({
       </TouchableOpacity>
     </View>
     <View style={headerStyles.centerSection}>
-      <Text style={[headerStyles.title, { fontSize: 24 }]}>{title}</Text>
+      <Text style={[headerStyles.title, { fontSize: 24 }]}>
+        <Text style={{ color: commonColors.primary }}>Glowy</Text>
+        <Text style={{ color: "#FFD700" }}> ✨</Text>
+      </Text>
     </View>
     <View style={headerStyles.rightSection}>
       {/* Empty for balanced layout */}
@@ -46,7 +50,7 @@ const MainScreenHeader = ({
 
 export default function MainScreen() {
   const router = useRouter();
-  const { user: currentUser, isLoggedIn, logout, loading } = useAuth();
+  const { user: currentUser, isLoggedIn, loading } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const [jewelries, setJewelries] = useState<Jewellery[]>([]);
   const [cartCount, setCartCount] = useState(0);
@@ -161,42 +165,7 @@ export default function MainScreen() {
     setMenuVisible(false);
   };
 
-  const handleLogout = () => {
-    showCustomAlert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", onPress: () => { }, style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await apiLogoutUser();
-              logout();
-              setMenuVisible(false);
-              setCartCount(0);
-              showCustomAlert(
-                "Success",
-                "Logged out successfully!",
-                [{ text: "OK", onPress: () => { } }],
-                "checkmark-circle-outline"
-              );
-            } catch (error) {
-              console.error("Logout error:", error);
-              showCustomAlert(
-                "Error",
-                "Failed to logout",
-                [{ text: "OK", onPress: () => { } }],
-                "warning-outline"
-              );
-            }
-          },
-        },
-      ],
-      "log-out-outline"
-    );
-  };
+  const handleLogout = useLogout();
 
   // Side menu logic and rendering (only used in MainScreen)
   const getMenuItems = (): MenuItem[] => {
