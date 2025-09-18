@@ -1,0 +1,170 @@
+import { StyleSheet } from "react-native";
+
+export const ButtonStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: "#800080",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  warning: {
+    backgroundColor: "#ff4444",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  secondary: {
+    backgroundColor: "#ccc",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  text: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  disabled: {
+    backgroundColor: "#ccc",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  textDisabled: {
+    color: "#aaa",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+
+  // Alert / Success specific styles
+  alertOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  alertBox: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    width: '80%',
+    height: '20%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    overflow: 'hidden',
+    paddingTop: 15,
+    paddingBottom: 15,
+  },
+  alertIcon: {
+    marginBottom: 5,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    width: 50,
+    height: 50,
+  },
+  alertMessage: {
+    color: '#333',
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 2,
+    lineHeight: 15,
+    paddingHorizontal: 25,
+  },
+  alertButton: {
+    backgroundColor: '#800080',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 17,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  alertButtonContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 1,
+    justifyContent: 'space-between',
+    paddingBottom: 15,
+  },
+
+  // Additional button styles
+  // PLACE ORDER BUTTON (checkout.tsx)
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+  },
+  placeOrderButton: {
+    backgroundColor: "#800080",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placeOrderButtonDisabled: {
+    backgroundColor: "#ccc",
+  },
+  placeOrderButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  // RADIO BUTTON
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#800080",
+    marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioButtonInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#800080",
+  },
+  // + BUTTON
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  addButtonText: {
+    color: "#800080",
+    fontWeight: "600",
+    marginLeft: 5,
+  },
+  addFirstButton: {
+    backgroundColor: "#800080",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  addFirstButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+});

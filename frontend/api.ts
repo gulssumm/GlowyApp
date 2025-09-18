@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_URL = process.env.API_URL || 'http://192.168.1.130:5000/api';
+const API_URL = process.env.API_URL || 'http://172.16.1.8:5000/api';
 
 console.log('Using API URL:', API_URL);
 

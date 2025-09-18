@@ -4,6 +4,35 @@ GlowyApp is a full-stack project built with **ASP.NET Core (backend)** and **Rea
 The backend provides APIs for authentication, shopping cart, and product management, while the frontend is a mobile app consuming these APIs.  
 
 ---
+## User Interface (on Expo Go App - iOS)
+<p align="center">
+  <img src="./screenshots/IMG-20250918-WA0015.jpg" alt="App Screenshot" width="200"/>
+  <img src="./screenshots/IMG-20250918-WA0014.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0016.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0017.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0018.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0019.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0020.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0021.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0022.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0023.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0024.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0025.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0026.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0027.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0028.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0029.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0030.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0031.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0032.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0033.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0034.jpg" alt="App Screenshot" width="200">
+  <img src="./screenshots/IMG-20250918-WA0035.jpg" alt="App Screenshot" width="200">
+</p>
+
+
+
+
 
 ## Tech Stack
 
